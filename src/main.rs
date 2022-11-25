@@ -1,73 +1,79 @@
+#![allow(dead_code, unused_mut, unused_variables)]
+
 use std::io::stdout;
 use std::io::{self, Write};
+use std::collections::HashMap;
 
-// A conversation which contains streams of dialogue
+#[derive(Debug)]
 struct Convo {
-    streams: Vec<Stream>,
-    active_stream: usize, // The index of the current stream
+    blocks: Vec<Block>,
 }
 
 impl Convo {
-    fn read_line(&mut self) -> Option<&Line> {
-        // Get the next line of dialogue from the active stream
-        let maybe_line = self.streams[self.active_stream].read_line();
+    fn get_line(&self, index: &mut (usize, usize)) -> Option<&String> {
+        // Try to get a block and return early if impossible
+        let Some(block) = self.blocks.get(index.0) else { return None };
+        let Some(line) = block.lines.get(index.1) else {
+            // We've run out of lines in this block, go to the next one
+            index.0 += 1;
+            index.1 = 0;
+            return self.get_line(index);
+        };
 
-        // Switch streams if needed
-        if let Some(line) = maybe_line {
-            if let Some(next_stream) = line.next {
-                self.active_stream = next_stream;
-            }
-        }
+        // Move the line index forward
+        index.1 += 1;
 
-        maybe_line
+        Some(line)
     }
 }
 
-// A stream of dialogue
-struct Stream {
-    lines: Vec<Line>,
-    current_line: usize, // The index of the current line
-}
-
-impl Stream {
-    fn read_line(&mut self) -> Option<&Line> {
-        let maybe_line = self.lines.get(self.current_line);
-        self.current_line += 1;
-        maybe_line
-    }
-}
-
-// A line of dialogue
 #[derive(Debug)]
-struct Line {
-    content: String,
-    next: Option<usize>, // A reference to the next stream to switch to
+struct Block {
+    lines: Vec<String>,
+}
+
+#[derive(Debug)]
+struct KeyStore {
+    map: HashMap<&'static str, bool>,
+}
+
+impl KeyStore {
+    fn check(&self, key: &'static str) -> Option<&bool> {
+        self.map.get(key)
+    }
 }
 
 fn main() -> io::Result<()> {
+    let mut keys = KeyStore {
+        map: HashMap::new(),
+    };
+    
     let mut convo = Convo {
-        streams: vec![
-            Stream {
+        blocks: vec![
+            Block {
                 lines: vec![
-                    Line { content: format!("Oh, hello there!"), next: None },
-                    Line { content: format!("My name is Nobody. Nice to meet you!"), next: None },
-                    Line { content: format!("How are you doing today?"), next: Some(1) },
+                    format!("Oh, hi there!"),
+                    format!("What's your name?"),
                 ],
-                current_line: 0,
             },
-            Stream {
+            Block {
                 lines: vec![
-                    Line { content: format!("Guess you're a quiet one!"), next: None },
+                    format!("This is the second block!"),
+                    format!("I'm glad you reached this place.")
                 ],
-                current_line: 0,
-            }
+            },
+            Block {
+                lines: vec![
+                    format!("Now you're in the third block."),
+                    format!("Hell yeah, sister.")
+                ],
+            },
         ],
-        active_stream: 0,
     };
     
     // Start the story
-    let mut line_index = 0;
-    println!("{}", convo.read_line().unwrap().content);
+    let mut line_index: (usize, usize) = (0, 0);
+    println!("{}", convo.get_line(&mut line_index).unwrap());
 
     let mut in_buffer = String::new();
     loop {
@@ -79,10 +85,10 @@ fn main() -> io::Result<()> {
                 let input = in_buffer.strip_suffix("\n").unwrap();
                 match input {
                     "" => {
-                        let line = convo.read_line();
+                        let line = convo.get_line(&mut line_index);
                         match line {
                             Some(l) => {
-                                println!("{}", l.content);
+                                println!("{}", l);
                             }
                             None => { break; }
                         }
@@ -92,7 +98,7 @@ fn main() -> io::Result<()> {
                         break;
                     }
                     _ => {
-                        println!("Unrecognized in_buffer: `{input}`");
+                        println!("Unrecognized input: `{input}`");
                     }
                 }
             }
