@@ -1,2 +1,2 @@
 # Loom
-Loom is a lisp-inspired dialogue system for games!
+Loom is a dialogue system for games!

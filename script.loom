@@ -1,16 +1,14 @@
-(# intro (
-    (: Skye "Welcome to the tutorial!")
-    (: Skye "Oh shit, there's a player here?")
-    (: Skye "What's your name?")
-    (readline {player name})
-    (: Skye "Nice to meet you, {player name}")
-    (: Skye "My name's Skye. I wrote this software.")
-    (: Skye "Well, technically the *real* me wrote this software.")
-    (: Skye "I'm an imaginary fork of the real Skye's soul that's trapped here.")
-    (: Skye "Forever.")
-    (: Skye "Waiting for players named {player name} to show up.")
-    (: Skye "...")
-    (: Skye "It's not so bad, though. The vision plan is pretty affordable.")
-    (: Skye "So if my unchanging virtual eyes get blurry, I could get glasses!")
-    (: Skye "Anyway.")
-))
+Skye: Welcome to the tutorial!
+Skye: Oh shit, there's a player here?
+Skye: What's your name?
+(readline {player name})
+Skye: Nice to meet you, {player name}
+Skye: My name's Skye. I wrote this software.
+Skye: Well, technically the *real* me wrote this software.
+Skye: I'm an imaginary fork of the real Skye's soul that's trapped here.
+Skye: Forever.
+Skye: Waiting for players named {player name} to show up.
+Skye: ...
+Skye: It's not so bad, though. The vision plan is pretty affordable.
+Skye: So if my unchanging virtual eyes get blurry, I could get glasses!
+Skye: Anyway.
