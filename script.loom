@@ -2,7 +2,7 @@ Skye: Welcome to the tutorial!
 Skye: Oh shit, there's a player here?
 Skye: What's your name?
 (readline {player name})
-Skye: Nice to meet you, {player name}
+Skye: Nice to meet you, {player name}!
 Skye: My name's Skye. I wrote this software.
 Skye: Well, technically the *real* me wrote this software.
 Skye: I'm an imaginary fork of the real Skye's soul that's trapped here.
