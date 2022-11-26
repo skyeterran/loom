@@ -18,8 +18,8 @@ impl<'a> Convo<'a> {
         // Check if the block needs a key
         if let Some(key) = block.key {
             // Check the value of this key in the keystore
-            let key_valid = match self.keystore.map.get(key) {
-                Some(v) => *v,
+            let key_valid = match self.keystore.map.get(key.0) {
+                Some(v) => *v == key.1,
                 None => false
             };
 
@@ -47,7 +47,7 @@ impl<'a> Convo<'a> {
 
 #[derive(Debug)]
 struct Block {
-    key: Option<&'static str>,
+    key: Option<(&'static str, bool)>, // A key-value conditional
     lines: Vec<String>,
 }
 
@@ -68,7 +68,7 @@ fn main() -> io::Result<()> {
     };
 
     // Add test keys
-    keys.map.insert("ShadowRealm", true);
+    keys.map.insert("ShadowRealm", false);
     
     let mut convo = Convo {
         keystore: &keys,
@@ -88,7 +88,13 @@ fn main() -> io::Result<()> {
                 ],
             },
             Block {
-                key: Some("ShadowRealm"),
+                key: Some(("ShadowRealm", false)),
+                lines: vec![
+                    format!("Welcome to the bright zone."),
+                ],
+            },
+            Block {
+                key: Some(("ShadowRealm", true)),
                 lines: vec![
                     format!("Welcome to the shadow realm."),
                 ],
