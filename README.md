@@ -23,6 +23,7 @@ Loom: Do you think my arrow syntax is cool?
     Loom: Glad to hear it!
 ))
 (-> "Not really." (
-    Loom: Aw, you're too sweet.
+    Loom: Aw, I'm heartbroken.
+    (end)
 ))
 ```
