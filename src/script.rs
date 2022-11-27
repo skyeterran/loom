@@ -12,7 +12,7 @@ impl Phrase {
         if let Some(first_char) = source.chars().next() {
             match first_char {
                 '(' => { return Ok(Phrase::Command(source.to_string())) },
-                _ => {
+                '-' => {
                     let Some(line) = source.split_once(": ") else {
                         return Err(ParseError)
                     };
@@ -23,6 +23,7 @@ impl Phrase {
                             })
                         );
                 },
+                _ => { return Err(ParseError) },
             }
         } else { return Err(ParseError) }
     }
