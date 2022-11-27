@@ -16,7 +16,7 @@ Write inline dynamic expressions like `(log {player_name})` for programatic beha
 Variables can be read from and written to in dialogue and expressions via the `{varName}` accessor syntax.
 
 ### Choices
-Branching dialogue is as simple as calling the `->` function in an expression to add a user-exposed choice to the interaction:
+Adding a player choice is as simple as calling the `->` function in an expression:
 ```
 Loom: Do you think my arrow syntax is cool?
 (-> "Yes." (
