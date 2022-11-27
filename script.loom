@@ -3,9 +3,9 @@
 @Skye: What's your name?
 
 (set player_name get_input)
-(set no_name (is_empty player_name))
+(set nameless (is_empty player_name))
 
-(if no_name (
+(if nameless (
     @Skye: Nice to meet you!
 ) else (
     @Skye: Nice to meet you, {player_name}!
@@ -34,6 +34,6 @@
     @Narrator: *sigh*
 ))
 
-(if no_name (
+(if nameless (
     @Narrator: It's kinda rude you didn't say your name, btw.
 ))
