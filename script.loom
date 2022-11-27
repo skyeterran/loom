@@ -15,7 +15,7 @@
 (if ShadowRealm (
     @Skye: Welcome to the shadow realm.
 ) else (
-    @Skye: Glad we're not in the shadow realm.
+    @Skye: Glad we're not in the shadow realm :relief:
     @Skye: That would have sucked, bro.
 ))
 

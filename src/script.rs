@@ -1,5 +1,9 @@
 #[derive(Debug)]
-pub struct ParseError;
+pub enum ParseError {
+    EmptyLine,
+    BadLine,
+    Unknown,
+}
 
 #[derive(Debug)]
 pub enum Phrase {
@@ -9,27 +13,29 @@ pub enum Phrase {
 
 impl Phrase {
     fn parse(source: String) -> Result<Self, ParseError> {
-        if let Some(first_char) = source.chars().next() {
-            match first_char {
-                '(' => { return Ok(Phrase::Expression(source.to_string())) },
-                ')' => { return Ok(Phrase::Expression(source.to_string())) },
-                '@' => {
-                    let Some((speaker, content)) = source.split_once(": ") else {
-                        return Err(ParseError)
-                    };
-                    let Some(speaker) = speaker.strip_prefix("@") else {
-                        return Err(ParseError);
-                    };
-                    return Ok(Phrase::Dialogue(
-                            Line {
-                                speaker: speaker.to_string(),
-                                content: content.to_string(),
-                            })
-                        );
-                },
-                _ => { return Err(ParseError) },
-            }
-        } else { return Err(ParseError) }
+        let raw = source.trim();
+        let Some(first_char) = raw.chars().next() else {
+            return Err(ParseError::EmptyLine);
+        };
+        match first_char {
+            '(' => { return Ok(Phrase::Expression(raw.to_string())) },
+            ')' => { return Ok(Phrase::Expression(raw.to_string())) },
+            '@' => {
+                let Some((speaker, content)) = raw.split_once(": ") else {
+                    return Err(ParseError::BadLine)
+                };
+                let Some(speaker) = speaker.strip_prefix("@") else {
+                    return Err(ParseError::BadLine);
+                };
+                return Ok(Phrase::Dialogue(
+                        Line {
+                            speaker: speaker.to_string(),
+                            content: content.to_string(),
+                        })
+                    );
+            },
+            _ => { return Err(ParseError::Unknown) },
+        }
     }
 }
 
@@ -50,8 +56,10 @@ impl Script {
         let raw_lines = source.split("\n");
         
         for raw_line in raw_lines {
-            let Ok(phrase) = Phrase::parse(raw_line.to_string()) else { continue; };
-            lines.push(phrase);
+            match Phrase::parse(raw_line.to_string()) {
+                Ok(phrase) => { lines.push(phrase) },
+                Err(error) => { println!("{:?}", error) },
+            }
         }
 
         Script {
