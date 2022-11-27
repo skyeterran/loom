@@ -1,4 +1,4 @@
-# Loom: A dialogue system for {YourGame}
+# Loom: A dialogue system for {your_game}
 Loom is a dynamic dialogue library for games with inline lisp-like expressions!
 
 ## Features
@@ -10,14 +10,14 @@ Loom is written like instant-message roleplaying and requires very little boiler
 ```
 
 ### Inline expressions and string formatting
-Write inline dynamic expressions like `(log VarName)` for programatic behavior. String formatting is as simple as using the `@Loom: I'm {LoomAge} years old!` syntax.
+Write inline dynamic expressions like `(log var_name)` for programatic behavior. String formatting is as simple as using the `@Loom: I'm {loom_age} years old!` syntax.
 
 ### Variables
 Variables can be read from and written to in dialogue:
 ```
 @Loom: What's your name?
-(let PlayerName input)
-@Loom: Nice to meet you, {PlayerName}!
+(let player_name input)
+@Loom: Nice to meet you, {player_name}!
 ```
 
 ### Choices

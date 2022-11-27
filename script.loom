@@ -2,21 +2,26 @@
 @Skye: Oh shit, there's a player here?
 @Skye: What's your name?
 
-(set PlayerName input)
+(set player_name get_input)
+(set no_name (is_empty player_name))
 
-@Skye: Nice to meet you, {PlayerName}!
+(if no_name (
+    @Skye: Nice to meet you!
+) else (
+    @Skye: Nice to meet you, {player_name}!
+))
+
 @Skye: My name's Skye. I wrote this software.
 @Skye: Well, technically the *real* me wrote this software.
 @Skye: I'm an imaginary fork of the real Skye's soul that's trapped here.
 @Skye: Forever.
-@Skye: Waiting for players named {PlayerName} to show up.
+@Skye: Waiting for players named {player_name} to show up.
 @Skye: ...
 
-(if ShadowRealm (
-    @Skye: Welcome to the shadow realm.
+(if shadow_realm (
+    @Skye: Anyway, welcome to the shadow realm.
 ) else (
-    @Skye: Glad we're not in the shadow realm :relief:
-    @Skye: That would have sucked, bro.
+    @Skye: At least we're not in the shadow realm!
 ))
 
 @Narrator: Are you done with the tutorial yet?
@@ -27,4 +32,8 @@
 (-> "This is a tutorial?" (
     @Skye: Hey, don't talk to that thing!
     @Narrator: *sigh*
+))
+
+(if no_name (
+    @Narrator: It's kinda rude you didn't say your name, btw.
 ))
