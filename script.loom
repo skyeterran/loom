@@ -20,11 +20,11 @@ Skye: ...
 ))
 
 Narrator: Are you done with the tutorial yet?
-(-> "yes" (
+(-> "Sure, I guess." (
     Narrator: Let's get out of here.
     (end)
 ))
-(-> "no" (
+(-> "This is a tutorial?" (
     Skye: Hey, don't talk to that thing!
     Narrator: *sigh*
 ))
