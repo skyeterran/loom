@@ -9,11 +9,11 @@ Loom: This is an example of dialogue!
 You: Seems pretty intuitive.
 ```
 
-### Inline expressions
-Write inline dynamic expressions like `(log {player_name})` for programatic behavior.
-
 ### Variables
 Variables can be read from and written to in dialogue and expressions via the `{varName}` accessor syntax.
+
+### Inline expressions
+Write inline dynamic expressions like `(log {player_name})` for programatic behavior.
 
 ### Choices
 Adding a player choice is as simple as calling the `->` function in an expression:
