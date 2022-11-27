@@ -12,18 +12,20 @@ impl Phrase {
         if let Some(first_char) = source.chars().next() {
             match first_char {
                 '(' => { return Ok(Phrase::Command(source.to_string())) },
-                '-' => {
-                    let Some(line) = source.split_once(": ") else {
+                _ => {
+                    let Some((speaker, content)) = source.split_once(": ") else {
                         return Err(ParseError)
+                    };
+                    let Some(speaker) = speaker.split_whitespace().next() else {
+                        return Err(ParseError);
                     };
                     return Ok(Phrase::Dialogue(
                             Line {
-                                speaker: line.0.to_string(),
-                                content: line.1.to_string(),
+                                speaker: speaker.to_string(),
+                                content: content.to_string(),
                             })
                         );
                 },
-                _ => { return Err(ParseError) },
             }
         } else { return Err(ParseError) }
     }
