@@ -1,39 +1,39 @@
-@Skye: Welcome to the tutorial!
-@Skye: Oh shit, there's a player here?
-@Skye: What's your name?
+Skye: Welcome to the tutorial!
+Skye: Oh shit, there's a player here?
+Skye: What's your name?
 
 (set player_name get_input)
 (set nameless (is_empty player_name))
 
 (if nameless (
-    @Skye: Nice to meet you!
+    Skye: Nice to meet you!
 ) else (
-    @Skye: Nice to meet you, {player_name}!
+    Skye: Nice to meet you, {player_name}!
 ))
 
-@Skye: My name's Skye. I wrote this software.
-@Skye: Well, technically the *real* me wrote this software.
-@Skye: I'm an imaginary fork of the real Skye's soul that's trapped here.
-@Skye: Forever.
-@Skye: Waiting for players named {player_name} to show up.
-@Skye: ...
+Skye: My name's Skye. I wrote this software.
+Skye: Well, technically the *real* me wrote this software.
+Skye: I'm an imaginary fork of the real Skye's soul that's trapped here.
+Skye: Forever.
+Skye: Waiting for players named {player_name} to show up.
+Skye: ...
 
 (if shadow_realm (
-    @Skye: Anyway, welcome to the shadow realm.
+    Skye: Anyway, welcome to the shadow realm.
 ) else (
-    @Skye: At least we're not in the shadow realm!
+    Skye: At least we're not in the shadow realm!
 ))
 
-@Narrator: Are you done with the tutorial yet?
+Narrator: Are you done with the tutorial yet?
 (-> "Sure, I guess." (
-    @Narrator: Let's get out of here.
+    Narrator: Let's get out of here.
     (end)
 ))
 (-> "This is a tutorial?" (
-    @Skye: Hey, don't talk to that thing!
-    @Narrator: *sigh*
+    Skye: Hey, don't talk to that thing!
+    Narrator: *sigh*
 ))
 
 (if nameless (
-    @Narrator: It's kinda rude you didn't say your name, btw.
+    Narrator: It's kinda rude you didn't say your name, btw.
 ))

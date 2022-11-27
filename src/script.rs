@@ -20,12 +20,9 @@ impl Phrase {
         match first_char {
             '(' => { return Ok(Phrase::Expression(raw.to_string())) },
             ')' => { return Ok(Phrase::Expression(raw.to_string())) },
-            '@' => {
+            _ => {
                 let Some((speaker, content)) = raw.split_once(": ") else {
-                    return Err(ParseError::BadLine)
-                };
-                let Some(speaker) = speaker.strip_prefix("@") else {
-                    return Err(ParseError::BadLine);
+                    return Err(ParseError::Unknown)
                 };
                 return Ok(Phrase::Dialogue(
                         Line {
@@ -34,7 +31,6 @@ impl Phrase {
                         })
                     );
             },
-            _ => { return Err(ParseError::Unknown) },
         }
     }
 }
