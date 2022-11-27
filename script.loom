@@ -31,14 +31,16 @@ Skye: ...
 ))
 
 Narrator: Are you done with the tutorial yet?
-(-> "Sure, I guess." (
-    Narrator: Let's get out of here.
-    (end)
-))
-(-> "This is a tutorial?" (
-    Skye: Hey, don't talk to that thing!
-    Narrator: *sigh*
-))
+(choice
+    ("Sure, I guess" (
+        Narrator: Let's get out of here.
+        (end)
+    ))
+    ("This is a tutorial?" (
+        Skye: Hey, don't talk to that thing!
+        Narrator: *sigh*
+    ))
+)
 
 (if nameless (
     Narrator: It's kinda rude you didn't say your name, btw.

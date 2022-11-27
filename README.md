@@ -21,14 +21,16 @@ Loom: Nice to meet you, {player_name}!
 ```
 
 ### Choices
-Adding a player choice is as simple as calling the `->` function in an expression:
+Adding a player choice is as simple as calling the `choice` function in an expression:
 ```
-Loom: Do you think my arrow syntax is cool?
-(-> "Yes." (
-    Loom: Glad to hear it!
-))
-(-> "Not really." (
-    Loom: Aw, I'm heartbroken.
-    (end)
-))
+Loom: Are you liking this style of writing so far?
+(choice
+    ("I love it!" (
+        Loom: That's great to hear!
+    ))
+    ("Not really." (
+        Loom: Aw, I'm heartbroken.
+        (end)
+    ))
+)
 ```
