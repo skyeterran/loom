@@ -1,4 +1,4 @@
-# Loom: A dialogue engine for {yourGame}
+# Loom: A dialogue engine for {your_game}
 Loom is a dialogue system for games with inline lisp-like expressions!
 
 ## Features
