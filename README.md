@@ -3,7 +3,7 @@ Loom is a dialogue system for games with inline lisp-like expressions!
 
 ## Features
 ### Writeable syntax
-Loom is written like a roleplaying script, and requires very little boilerplate, for example:
+Loom is written like a roleplaying script and requires very little boilerplate, for example:
 ```
 Me: This is an example of dialogue!
 You: Seems pretty intuitive.
