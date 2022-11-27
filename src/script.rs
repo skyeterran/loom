@@ -4,14 +4,14 @@ pub struct ParseError;
 #[derive(Debug)]
 pub enum Phrase {
     Dialogue(Line),
-    Command(String),
+    Expression(String),
 }
 
 impl Phrase {
     fn parse(source: String) -> Result<Self, ParseError> {
         if let Some(first_char) = source.chars().next() {
             match first_char {
-                '(' => { return Ok(Phrase::Command(source.to_string())) },
+                '(' => { return Ok(Phrase::Expression(source.to_string())) },
                 _ => {
                     let Some((speaker, content)) = source.split_once(": ") else {
                         return Err(ParseError)
