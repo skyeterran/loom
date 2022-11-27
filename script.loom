@@ -7,7 +7,7 @@ Skye: What's your name?
 
 (if nameless (
     Skye: Nice to meet you!
-) else (
+)(
     Skye: Nice to meet you, {player_name}!
 ))
 
@@ -18,10 +18,16 @@ Skye: Forever.
 Skye: Waiting for players named {player_name} to show up.
 Skye: ...
 
-(if shadow_realm (
-    Skye: Anyway, welcome to the shadow realm.
-) else (
-    Skye: At least we're not in the shadow realm!
+(match location (
+    ("shadow realm" (
+        Skye: Anyway, welcome to the shadow realm.
+    ))
+    ("bright zone" (
+        Skye: At least we're not in the shadow realm!
+    ))
+    (else (
+        Skye: Weirdly enough, idk where we are.
+    ))
 ))
 
 Narrator: Are you done with the tutorial yet?
