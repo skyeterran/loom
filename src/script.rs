@@ -12,11 +12,12 @@ impl Phrase {
         if let Some(first_char) = source.chars().next() {
             match first_char {
                 '(' => { return Ok(Phrase::Expression(source.to_string())) },
-                _ => {
+                ')' => { return Ok(Phrase::Expression(source.to_string())) },
+                '@' => {
                     let Some((speaker, content)) = source.split_once(": ") else {
                         return Err(ParseError)
                     };
-                    let Some(speaker) = speaker.split_whitespace().next() else {
+                    let Some(speaker) = speaker.strip_prefix("@") else {
                         return Err(ParseError);
                     };
                     return Ok(Phrase::Dialogue(
@@ -26,6 +27,7 @@ impl Phrase {
                             })
                         );
                 },
+                _ => { return Err(ParseError) },
             }
         } else { return Err(ParseError) }
     }
