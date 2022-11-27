@@ -10,7 +10,7 @@ Loom is written like instant-message roleplaying and requires very little boiler
 ```
 
 ### Inline expressions and string formatting
-Write inline dynamic expressions like `(log VarName)` for programatic behavior. String formatting is as simple as using the `Loom: I'm {LoomAge} years old!` syntax.
+Write inline dynamic expressions like `(log VarName)` for programatic behavior. String formatting is as simple as using the `@Loom: I'm {LoomAge} years old!` syntax.
 
 ### Variables
 Variables can be read from and written to in dialogue:
