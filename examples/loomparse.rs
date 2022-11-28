@@ -6,7 +6,6 @@ use loom::script::Script;
 
 fn main() {
     let source = fs::read_to_string("script.loom").expect("Couldn't load file!");
-    //println!("Source:\n```\n{}\n```", source);
 
     let mut script = Script::parse(source);
     println!("{:#?}", script);

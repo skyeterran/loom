@@ -43,23 +43,23 @@ pub struct Line {
 
 #[derive(Debug)]
 pub struct Script {
-    pub lines: Vec<Phrase>,
+    pub phrases: Vec<Phrase>,
 }
 
 impl Script {
     pub fn parse(source: String) -> Self {
-        let mut lines: Vec<Phrase> = Vec::new();
+        let mut phrases: Vec<Phrase> = Vec::new();
         let raw_lines = source.split("\n");
         
         for raw_line in raw_lines {
             match Phrase::parse(raw_line.to_string()) {
-                Ok(phrase) => { lines.push(phrase) },
-                Err(error) => { println!("{:?}", error) },
+                Ok(phrase) => { phrases.push(phrase) },
+                Err(error) => {},
             }
         }
 
         Script {
-            lines: lines
+            phrases: phrases
         }
     }
 }
