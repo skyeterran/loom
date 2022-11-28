@@ -68,6 +68,7 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
                 literal_string = String::new();
                 continue;
             } else {
+                // TODO: String literals which contain parentheses are getting extra spaces
                 if !literal_string.is_empty() {
                     literal_string.push(' ');
                 }
