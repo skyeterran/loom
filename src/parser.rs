@@ -1,5 +1,5 @@
 /// Takes a Loom source file and formats all dialogue into Lispy function calls
-pub fn lispify(source: String) -> String {
+fn lispify(source: String) -> String {
     let mut new_lines: Vec<String> = Vec::new();
 
     for raw_line in source.split("\n") {
@@ -18,6 +18,11 @@ pub fn lispify(source: String) -> String {
 }
 
 #[derive(Debug)]
+pub enum ParseError {
+    UnfinishedString,
+}
+
+#[derive(Debug)]
 pub enum Token {
     LParen,
     RParen,
@@ -26,7 +31,8 @@ pub enum Token {
 }
 
 /// Takes a Lispy string and turns it into a stream of tokens
-pub fn tokenize(source: String) -> Vec<Token> {
+pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
+    use ParseError::*;
     use Token::*;
 
     // Lispify the source script and add spaces for ease of parsing
@@ -69,5 +75,10 @@ pub fn tokenize(source: String) -> Vec<Token> {
         }
     }
 
-    tokens
+    if consume_string {
+        // If we're still consuming a string, that means it's missing an end quote
+        return Err(UnfinishedString);
+    }
+
+    Ok(tokens)
 }

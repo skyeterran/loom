@@ -44,4 +44,5 @@ Narrator: Are you done with the tutorial yet?
 
 (if nameless (
     Narrator: It's kinda rude you didn't say your name, btw.
+    (say Skye "Don't listen to them, you're perfect the way you are.")
 ))
