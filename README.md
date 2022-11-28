@@ -1,5 +1,5 @@
 # 🧶 Loom: A narrative system for {your_game}
-Loom is a scripting language that makes writing interactive dialogue fun! It's powered by Rust, and based on Lisp, which makes it simple to use and scalable in terms of both performance and narrative complexity.
+Loom is a scripting language that makes writing interactive dialogue fun! It's based on Lisp and powered by Rust, which makes it simple to use and scalable in terms of both performance and narrative complexity.
 
 ## Features
 ### Writeable syntax
