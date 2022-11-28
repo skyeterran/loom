@@ -1,0 +1,48 @@
+(say Skye "Welcome to the tutorial!")
+(say Skye "Oh shit, there's a player here?")
+(say Skye "What's your name?")
+
+(set player_name get_input)
+(set nameless (is_empty player_name))
+
+(if nameless (
+(say Skye "Nice to meet you!")
+)(
+(say Skye "Nice to meet you, {player_name}!")
+))
+
+(say Skye "My name's Skye. I wrote this software.")
+(say Skye "Well, technically the *real* me wrote this software.")
+(say Skye "I'm an imaginary fork of the real Skye's soul that's trapped here.")
+(say Skye "Forever.")
+(say Skye "Waiting for players named {player_name} to show up.")
+(say Skye "...")
+
+(match location (
+("shadow realm" (
+(say Skye "Anyway, welcome to the shadow realm.")
+))
+("bright zone" (
+(say Skye "At least we're not in the shadow realm!")
+))
+(_ (
+(say Skye "Weirdly enough, idk where we are.")
+))
+))
+
+(say Narrator "Are you done with the tutorial yet?")
+(choice
+("Sure, I guess" (
+(say Narrator "Let's get out of here.")
+(end)
+))
+("This is a tutorial?" (
+(say Skye "Hey, don't talk to that thing!")
+(say Narrator "*sigh*")
+))
+)
+
+(if nameless (
+(say Narrator "It's kinda rude you didn't say your name, btw.")
+))
+
