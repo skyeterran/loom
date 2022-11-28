@@ -47,8 +47,8 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
     let mut consume_string = false;
     let mut literal_string = String::new();
     for word in words.split(" ") {
-        if !word.is_empty() {
-            if !consume_string {
+        if !consume_string {
+            if !word.is_empty() {
                 // Expression parsing
                 match word {
                     "(" => { tokens.push(LParen) },
@@ -58,20 +58,20 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
                     },
                     _ => { tokens.push(Symbol(word.to_string())) },
                 }
+            }
+        } else {
+            // String parsing
+            if word == "\"" {
+                // Stop consuming the string and move on, clearing the string buffer
+                consume_string = false;
+                tokens.push(StringToken(literal_string.clone()));
+                literal_string = String::new();
+                continue;
             } else {
-                // String parsing
-                if word == "\"" {
-                    // Stop consuming the string and move on, clearing the string buffer
-                    consume_string = false;
-                    tokens.push(StringToken(literal_string.clone()));
-                    literal_string = String::new();
-                    continue;
-                } else {
-                    if !literal_string.is_empty() {
-                        literal_string.push(' ');
-                    }
-                    literal_string.push_str(word);
+                if !literal_string.is_empty() {
+                    literal_string.push(' ');
                 }
+                literal_string.push_str(word);
             }
         }
     }
