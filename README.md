@@ -10,7 +10,7 @@ Player: Seems pretty intuitive.
 ```
 
 ### Inline expressions and string formatting
-Write inline dynamic expressions like `(print var_name)` for programatic behavior. String formatting is as simple as using `{curly_braces}` in dialogue.
+Write inline expressions `(like this)` for programatic behavior. String formatting is as simple as using `Loom: Using {curly_braces} in dialogue!`
 
 ### Variables
 Variables can be read from and written to in dialogue:
