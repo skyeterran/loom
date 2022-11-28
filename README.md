@@ -1,5 +1,5 @@
 # 🧶 Loom: A narrative system for {your_game}
-Loom is a dynamic dialogue library for games with inline lisp-like expressions!
+Loom is a scripting language that makes writing interactive dialogue fun! It's powered by Rust, and based on Lisp, which makes it simple to use and scalable in terms of both performance and narrative complexity.
 
 ## Features
 ### Writeable syntax
@@ -10,7 +10,7 @@ Player: Seems pretty intuitive.
 ```
 
 ### Inline expressions and string formatting
-Write inline expressions `(like this)` for programatic behavior. String formatting is as simple as using `{curly_braces}` in dialogue!
+Write inline expressions `(like this)` for dynamic behavior. String formatting is as simple as using `{curly_braces}` in dialogue!
 
 ### Variables
 Variables can be read from and written to in dialogue:
