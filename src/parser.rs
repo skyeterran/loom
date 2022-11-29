@@ -21,6 +21,11 @@ fn lispify(source: String) -> String {
 pub enum ParseError {
     UnfinishedString,
     UnexpectedRParen,
+    ImproperRoot,
+    UnknownType,
+    UnknownSymbol,
+    MissingArgument,
+    Unknown,
 }
 
 #[derive(Debug, Clone)]
