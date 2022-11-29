@@ -37,9 +37,31 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
     use Token::*;
 
     // Lispify the source script and add spaces for ease of parsing
-    let words = lispify(source).replace("(", " ( ")
-                               .replace(")", " ) ")
-                               .replace("\"", " \" ");
+    let mut words = String::new();
+    let mut in_string = false;
+    for char in lispify(source).chars() {
+        if !in_string {
+            match char {
+                '(' => { words.push_str(" ( ") },
+                ')' => { words.push_str(" ) ") },
+                '\"' => {
+                    in_string = true;
+                    words.push_str(" \" ");
+                },
+                _ => { words.push(char) }
+            }
+        } else {
+            // Don't put spaces around parentheses while in a string literal
+            // TODO: What about expressions embedded in formatting strings???
+            match char {
+                '\"' => {
+                    in_string = false;
+                    words.push_str(" \" ");
+                },
+                _ => { words.push(char) }
+            }
+        }
+    }
 
     let mut tokens: Vec<Token> = Vec::new();
 
@@ -68,7 +90,6 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
                 literal_string = String::new();
                 continue;
             } else {
-                // TODO: String literals which contain parentheses are getting extra spaces
                 if !literal_string.is_empty() {
                     literal_string.push(' ');
                 }
