@@ -58,3 +58,33 @@ Loom: Are you liking this style of writing so far?
     ))
 )
 ```
+
+### Randomization
+Branch dialogue randomly in a uniform way with the `random` expression:
+```
+(random (
+    (
+        Loom: Option A!
+    )
+    (
+        Loom: Option B?
+    )
+    (
+        Loom: Option C...
+    )
+))
+```
+...or, control the likelihood of each option with the `weighted` expression:
+```
+(weighted (
+    (1.0 (
+        Loom: This is kinda likely.
+    ))
+    (3.0 (
+        Loom: This is rather likely.
+    ))
+    (0.1 (
+        Loom: This is very unlikely.
+    ))
+))
+```
