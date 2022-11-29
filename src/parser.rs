@@ -24,7 +24,7 @@ pub enum ParseError {
     ImproperRoot,
     UnknownType,
     UnknownSymbol,
-    MissingArgument,
+    WrongArgument,
     Unknown,
 }
 
@@ -112,6 +112,14 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
 }
 
 #[derive(Debug)]
+pub enum LogicError {
+    MissingSymbol,
+    MissingItem,
+    WrongArgument,
+    Unknown,
+}
+
+#[derive(Debug)]
 pub enum Object {
     Symbol(String),
     LitString(String),
@@ -171,5 +179,77 @@ impl Object {
         }
 
         Ok(Object::List(list))
+    }
+
+    pub fn evaluate(&self) -> Result<(), LogicError> {
+        use Object::*;
+
+        match self {
+            List(list) => {
+                let Some(first_item) = list.first() else {
+                    return Err(LogicError::MissingItem);
+                };
+
+                match first_item {
+                    Symbol(f) => {
+                        // Function call
+                        match f.as_str() {
+                            // Kludgy test logic
+                            "say" => {
+                                let Some(Symbol(speaker)) = list.get(1) else {
+                                    return Err(LogicError::WrongArgument);
+                                };
+                                let Some(LitString(dialogue)) = list.get(2) else {
+                                    return Err(LogicError::WrongArgument);
+                                };
+                                println!("{speaker}: {dialogue}");
+                            },
+                            "if" => {
+                                let Some(Symbol(condition)) = list.get(1) else {
+                                    return Err(LogicError::WrongArgument);
+                                };
+                                let mut test = false;
+                                match condition.as_str() {
+                                    "true" => { test = true },
+                                    "false" => { test = false },
+                                    "nameless" => { test = true },
+                                    _ => {},
+                                }
+                                if test {
+                                    let Some(true_list) = list.get(2) else {
+                                        return Err(LogicError::WrongArgument);
+                                    };
+                                    true_list.evaluate()?;
+                                } else {
+                                    let Some(false_list) = list.get(3) else {
+                                        return Ok(());
+                                    };
+                                    false_list.evaluate()?;
+                                }
+                            },
+                            _ => {},
+                        }
+                    },
+                    List(_) => {
+                        // Pure list
+                        for item in list {
+                            item.evaluate()?;
+                        }
+                    },
+                    _ => {
+                        return Err(LogicError::Unknown);
+                    },
+                }
+            },
+            Symbol(s) => {
+                println!("Symbol: {s}");
+            },
+            LitString(s) => {
+                println!("String: {s}");
+            },
+            _ => { return Err(LogicError::Unknown) },
+        }
+
+        Ok(())
     }
 }

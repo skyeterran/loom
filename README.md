@@ -20,6 +20,30 @@ Loom: What's your name?
 Loom: Nice to meet you, {player_name}!
 ```
 
+### Pattern matching
+Simple branching dialogue can be easily written with `if` expressions:
+```
+(if cool (
+    Loom: This is radical!
+)(
+    Loom: Aw, this sucks.
+))
+```
+...or with the `match` expression, which can represent more flexible states:
+```
+(match temperature (
+    ("hot" (
+        Loom: It's boiling in here!
+    ))
+    ("cold" (
+        Loom: It's freezing!
+    ))
+    ("mild" (
+        Loom: Ahh, perfect room temp.
+    ))
+))
+```
+
 ### Choices
 Adding a player choice is as simple as calling the `choice` function in an expression:
 ```

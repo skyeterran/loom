@@ -1,9 +1,9 @@
 Skye: Welcome to the tutorial!
-Skye: Oh shit, there's a player here?
+Skye: Oh man, there's a player here?
 Skye: What's your name?
 
-(set player_name get_input)
-(set nameless (is_empty player_name))
+(let player_name get_input)
+(let nameless (is_empty player_name))
 
 (if nameless (
     Skye: Nice to meet you!
