@@ -1,65 +1,51 @@
-#[derive(Debug)]
-pub enum ParseError {
-    EmptyLine,
-    BadLine,
-    Unknown,
-}
+use std::collections::HashMap;
+use super::parser::Object;
 
 #[derive(Debug)]
-pub enum Phrase {
-    Dialogue(Line),
-    Expression(String),
+pub struct Memory {
+    pub map: HashMap<String, String>,
 }
 
-impl Phrase {
-    fn parse(source: String) -> Result<Self, ParseError> {
-        let raw = source.trim();
-        let Some(first_char) = raw.chars().next() else {
-            return Err(ParseError::EmptyLine);
-        };
-        match first_char {
-            '(' => { return Ok(Phrase::Expression(raw.to_string())) },
-            ')' => { return Ok(Phrase::Expression(raw.to_string())) },
-            _ => {
-                let Some((speaker, content)) = raw.split_once(": ") else {
-                    return Err(ParseError::Unknown)
-                };
-                return Ok(Phrase::Dialogue(
-                        Line {
-                            speaker: speaker.to_string(),
-                            content: content.to_string(),
-                        })
-                    );
-            },
+impl Memory {
+    pub fn new() -> Self {
+        Memory {
+            map: HashMap::new(),
         }
     }
 }
 
 #[derive(Debug)]
-pub struct Line {
-    pub speaker: String,
-    pub content: String,
+pub enum Cmd {
+    Noop, // Do nothing
+    Say(String, String), // Say a line of dialogue
+    Let(String, String), // Insert a value into memory
 }
 
 #[derive(Debug)]
 pub struct Script {
-    pub phrases: Vec<Phrase>,
+    pub objects: Vec<Object>,
+    pub memory: Memory,
+    pub index: usize,
 }
 
 impl Script {
-    pub fn parse(source: String) -> Self {
-        let mut phrases: Vec<Phrase> = Vec::new();
-        let raw_lines = source.split("\n");
-        
-        for raw_line in raw_lines {
-            match Phrase::parse(raw_line.to_string()) {
-                Ok(phrase) => { phrases.push(phrase) },
-                Err(error) => {},
-            }
+    pub fn progress(&mut self) {
+        match self.objects.get(self.index).unwrap().evaluate(&self.memory) {
+            Ok(cmd) => {
+                //println!("{:?}", cmd);
+                match cmd {
+                    Cmd::Noop => {},
+                    Cmd::Say(s, d) => {
+                        println!("{s}: {d}");
+                    },
+                    Cmd::Let(k, v) => {
+                        println!("let {k} = {v}");
+                        self.memory.map.insert(k, v);
+                    }
+                }
+            },
+            Err(e) => { println!("Error: {:?}", e) },
         }
-
-        Script {
-            phrases: phrases
-        }
+        self.index += 1;
     }
 }

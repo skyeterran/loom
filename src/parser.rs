@@ -1,3 +1,5 @@
+use super::script::{Memory, Cmd};
+
 /// Takes a Loom source file and formats all dialogue into Lispy function calls
 fn lispify(source: String) -> String {
     let mut new_lines: Vec<String> = Vec::new();
@@ -181,7 +183,7 @@ impl Object {
         Ok(Object::List(list))
     }
 
-    pub fn evaluate(&self) -> Result<(), LogicError> {
+    pub fn evaluate(&self, memory: &Memory) -> Result<Cmd, LogicError> {
         use Object::*;
 
         match self {
@@ -202,30 +204,66 @@ impl Object {
                                 let Some(LitString(dialogue)) = list.get(2) else {
                                     return Err(LogicError::WrongArgument);
                                 };
-                                println!("{speaker}: {dialogue}");
+                                return Ok(Cmd::Say(speaker.clone(), dialogue.clone()));
                             },
                             "if" => {
-                                let Some(Symbol(condition)) = list.get(1) else {
+                                let Some(Symbol(key)) = list.get(1) else {
                                     return Err(LogicError::WrongArgument);
                                 };
-                                let mut test = false;
-                                match condition.as_str() {
-                                    "true" => { test = true },
-                                    "false" => { test = false },
-                                    "nameless" => { test = true },
-                                    _ => {},
+                                let mut test: String;
+                                // Check the value of the key in the memory
+                                match memory.map.get(key) {
+                                    Some(v) => { test = v.clone(); },
+                                    None => { test = "false".to_string() },
                                 }
-                                if test {
+                                if test == "true" {
+                                    println!("Truthy!");
                                     let Some(true_list) = list.get(2) else {
                                         return Err(LogicError::WrongArgument);
                                     };
-                                    true_list.evaluate()?;
+                                    return true_list.evaluate(memory);
                                 } else {
                                     let Some(false_list) = list.get(3) else {
-                                        return Ok(());
+                                        return Ok(Cmd::Noop);
                                     };
-                                    false_list.evaluate()?;
+                                    return false_list.evaluate(memory);
                                 }
+                            },
+                            "let" => {
+                                let Some(Symbol(key)) = list.get(1) else {
+                                    return Err(LogicError::WrongArgument);
+                                };
+                                let Some(LitString(value)) = list.get(2) else {
+                                    return Err(LogicError::WrongArgument);
+                                };
+                                return Ok(Cmd::Let(key.clone(), value.clone()));
+                            },
+                            "match" => {
+                                let Some(Symbol(key)) = list.get(1) else {
+                                    return Err(LogicError::WrongArgument);
+                                };
+                                let val = match memory.map.get(key) {
+                                    Some(v) => v.clone(),
+                                    None => "false".to_string(),
+                                };
+                                // Look through the possible choices until one is valid
+                                for variant in &list[2..] {
+                                    let List(var_list) = variant else {
+                                        return Err(LogicError::WrongArgument);
+                                    };
+                                    let Some(LitString(value)) = var_list.get(0) else {
+                                        return Err(LogicError::MissingItem);
+                                    };
+                                    let Some(path) = var_list.get(1) else {
+                                        return Err(LogicError::MissingItem);
+                                    };
+                                    if &val == value {
+                                        return path.evaluate(memory);
+                                    } else {
+                                        continue;
+                                    }
+                                }
+                                return Ok(Cmd::Noop);
                             },
                             _ => {},
                         }
@@ -233,7 +271,7 @@ impl Object {
                     List(_) => {
                         // Pure list
                         for item in list {
-                            item.evaluate()?;
+                            item.evaluate(memory)?;
                         }
                     },
                     _ => {
@@ -250,6 +288,6 @@ impl Object {
             _ => { return Err(LogicError::Unknown) },
         }
 
-        Ok(())
+        Ok(Cmd::Noop)
     }
 }
