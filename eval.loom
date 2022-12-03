@@ -1,18 +1,18 @@
-(let Skye "Skye Terran")
-Skye: Hello, there!
-(say Skye (format "My name is " Skye "!"))
+(let Person (random "Skye" "Sock" "Salad" "Lee" "Brandon" "Silvia"))
+Person: Hello, there!
+(say Person (format "My name is " Person "!"))
 
 (if true (do
-    Skye: That's true!
+    Person: That's true!
 )(do
-    Skye: That's not right.
+    Person: That's not right.
 ))
 
 (random
-    Skye: Woah, cool!
-    Skye: Oh, shit.
-    Skye: Fuck???
-    Skye: What, why?
-    Skye: Aw, shucks.
-    Skye: Noooooooooo!
+    Person: Woah, cool!
+    Person: Oh, shit.
+    Person: Fuck???
+    Person: What, why?
+    Person: Aw, shucks.
+    Person: Noooooooooo!
 )
