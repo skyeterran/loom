@@ -1,4 +1,5 @@
-use super::script::{Memory, Cmd};
+use super::exp::LoomExp;
+use std::num::ParseFloatError;
 
 /// Takes a Loom source file and formats all dialogue into Lispy function calls
 fn lispify(source: String) -> String {
@@ -34,6 +35,7 @@ pub enum ParseError {
 pub enum Token {
     LParen,
     RParen,
+    Number(f64),
     Symbol(String),
     StringToken(String),
 }
@@ -80,12 +82,22 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
             if !word.is_empty() {
                 // Expression parsing
                 match word {
-                    "(" => { tokens.push(LParen) },
-                    ")" => { tokens.push(RParen) },
+                    "(" => { tokens.push(LParen); },
+                    ")" => { tokens.push(RParen); },
                     "\"" => {
                         consume_string = true;
                     },
-                    _ => { tokens.push(Symbol(word.to_string())) },
+                    _ => {
+                        let maybe_number: Result<f64, ParseFloatError> = word.parse();
+                        match maybe_number {
+                            Ok(n) => {
+                                tokens.push(Number(n));
+                            },
+                            Err(_) => {
+                                tokens.push(Symbol(word.to_string()));
+                            }
+                        }
+                    },
                 }
             }
         } else {
@@ -113,181 +125,58 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
     Ok(tokens)
 }
 
-#[derive(Debug)]
-pub enum LogicError {
-    MissingSymbol,
-    MissingItem,
-    WrongArgument,
-    Unknown,
-}
+// Creates an object from a stream of tokens
+pub fn tokens_to_exp(tokens: Vec<Token>) -> Result<LoomExp, ParseError> {
+    use ParseError::*;
+    use Token::*;
 
-#[derive(Debug)]
-pub enum Object {
-    Symbol(String),
-    LitString(String),
-    List(Vec<Object>),
-}
+    // The list we're building up
+    let mut list: Vec<LoomExp> = Vec::new();
 
-impl Object {
-    // Creates an object from a stream of tokens
-    pub fn from_tokens(tokens: Vec<Token>) -> Result<Self, ParseError> {
-        use ParseError::*;
-        use Token::*;
+    let mut consume_substream = false;
+    let mut nesting: usize = 0;
+    let mut substream: Vec<Token> = Vec::new();
+    for token in tokens {
+        if !consume_substream {
+            // Token parsing
+            match token {
+                LParen => {
+                    // Create an object from this sub-expression
+                    consume_substream = true;
+                    nesting += 1;
+                },
+                RParen => {
+                    return Err(UnexpectedRParen);
+                },
+                Symbol(s) => {
+                    list.push(LoomExp::Symbol(s));
+                },
+                Number(n) => {
+                    list.push(LoomExp::Number(n));
+                },
+                StringToken(s) => {
+                    list.push(LoomExp::FString(s));
+                },
+            }
+        } else {
+            // Substream parsing
+            match token {
+                LParen => { nesting += 1 },
+                RParen => { nesting -= 1 },
+                _ => {},
+            }
 
-        // The list we're building up
-        let mut list: Vec<Object> = Vec::new();
-
-        let mut consume_substream = false;
-        let mut nesting: usize = 0;
-        let mut substream: Vec<Token> = Vec::new();
-        for token in tokens {
-            if !consume_substream {
-                // Token parsing
-                match token {
-                    LParen => {
-                        // Create an object from this sub-expression
-                        consume_substream = true;
-                        nesting += 1;
-                    },
-                    RParen => {
-                        return Err(UnexpectedRParen);
-                    },
-                    Symbol(s) => {
-                        list.push(Object::Symbol(s));
-                    },
-                    StringToken(s) => {
-                        list.push(Object::LitString(s));
-                    },
-                    _ => {},
-                }
+            if nesting > 0 {
+                // Consume substream
+                substream.push(token.clone());
             } else {
-                // Substream parsing
-                match token {
-                    LParen => { nesting += 1 },
-                    RParen => { nesting -= 1 },
-                    _ => {},
-                }
-
-                if nesting > 0 {
-                    // Consume substream
-                    substream.push(token.clone());
-                } else {
-                    // Parse the substream and clear it
-                    consume_substream = false;
-                    list.push(Object::from_tokens(substream.clone())?);
-                    substream = Vec::new();
-                }
+                // Parse the substream and clear it
+                consume_substream = false;
+                list.push(tokens_to_exp(substream.clone())?);
+                substream = Vec::new();
             }
         }
-
-        Ok(Object::List(list))
     }
 
-    pub fn evaluate(&self, memory: &Memory) -> Result<Cmd, LogicError> {
-        use Object::*;
-
-        match self {
-            List(list) => {
-                let Some(first_item) = list.first() else {
-                    return Err(LogicError::MissingItem);
-                };
-
-                match first_item {
-                    Symbol(f) => {
-                        // Function call
-                        match f.as_str() {
-                            // Kludgy test logic
-                            "say" => {
-                                let Some(Symbol(speaker)) = list.get(1) else {
-                                    return Err(LogicError::WrongArgument);
-                                };
-                                let Some(LitString(dialogue)) = list.get(2) else {
-                                    return Err(LogicError::WrongArgument);
-                                };
-                                return Ok(Cmd::Say(speaker.clone(), dialogue.clone()));
-                            },
-                            "if" => {
-                                let Some(Symbol(key)) = list.get(1) else {
-                                    return Err(LogicError::WrongArgument);
-                                };
-                                let mut test: String;
-                                // Check the value of the key in the memory
-                                match memory.map.get(key) {
-                                    Some(v) => { test = v.clone(); },
-                                    None => { test = "false".to_string() },
-                                }
-                                if test == "true" {
-                                    println!("Truthy!");
-                                    let Some(true_list) = list.get(2) else {
-                                        return Err(LogicError::WrongArgument);
-                                    };
-                                    return true_list.evaluate(memory);
-                                } else {
-                                    let Some(false_list) = list.get(3) else {
-                                        return Ok(Cmd::Noop);
-                                    };
-                                    return false_list.evaluate(memory);
-                                }
-                            },
-                            "let" => {
-                                let Some(Symbol(key)) = list.get(1) else {
-                                    return Err(LogicError::WrongArgument);
-                                };
-                                let Some(LitString(value)) = list.get(2) else {
-                                    return Err(LogicError::WrongArgument);
-                                };
-                                return Ok(Cmd::Let(key.clone(), value.clone()));
-                            },
-                            "match" => {
-                                let Some(Symbol(key)) = list.get(1) else {
-                                    return Err(LogicError::WrongArgument);
-                                };
-                                let val = match memory.map.get(key) {
-                                    Some(v) => v.clone(),
-                                    None => "false".to_string(),
-                                };
-                                // Look through the possible choices until one is valid
-                                for variant in &list[2..] {
-                                    let List(var_list) = variant else {
-                                        return Err(LogicError::WrongArgument);
-                                    };
-                                    let Some(LitString(value)) = var_list.get(0) else {
-                                        return Err(LogicError::MissingItem);
-                                    };
-                                    let Some(path) = var_list.get(1) else {
-                                        return Err(LogicError::MissingItem);
-                                    };
-                                    if &val == value {
-                                        return path.evaluate(memory);
-                                    } else {
-                                        continue;
-                                    }
-                                }
-                                return Ok(Cmd::Noop);
-                            },
-                            _ => {},
-                        }
-                    },
-                    List(_) => {
-                        // Pure list
-                        for item in list {
-                            item.evaluate(memory)?;
-                        }
-                    },
-                    _ => {
-                        return Err(LogicError::Unknown);
-                    },
-                }
-            },
-            Symbol(s) => {
-                println!("Symbol: {s}");
-            },
-            LitString(s) => {
-                println!("String: {s}");
-            },
-            _ => { return Err(LogicError::Unknown) },
-        }
-
-        Ok(Cmd::Noop)
-    }
+    Ok(LoomExp::List(list))
 }

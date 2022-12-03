@@ -4,19 +4,13 @@ use std::io::stdout;
 use std::io::{self, Write};
 use std::env;
 use std::fs;
-use loom::parser::{tokenize, Object, Object::*, ParseError, ParseError::*};
-use loom::script::{Memory, Script};
+use loom::parser::{tokenize, Expr, ParseError, ParseError::*};
+use std::collections::HashMap;
 
 fn main() -> io::Result<()> {
     let source = fs::read_to_string("test.loom").expect("Couldn't load file!");
     let tokens = tokenize(source).unwrap();
-    let List(objects) = Object::from_tokens(tokens).unwrap() else { panic!() };
-
-    let mut script = Script {
-        objects,
-        memory: Memory::new(),
-        index: 0,
-    };
+    let Expr::List(exprs) = Expr::from_tokens(tokens).unwrap() else { panic!() };
 
     let mut in_buffer = String::new();
     let mut i: usize = 0;
@@ -32,7 +26,7 @@ fn main() -> io::Result<()> {
                 };
                 match input {
                     "" => {
-                        script.progress();
+                        println!("Next!");
                     },
                     "q" => {
                         println!("Farewell, traveler!");
