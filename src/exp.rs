@@ -67,7 +67,7 @@ impl fmt::Display for LoomExp {
             LoomExp::False => { format!("false") },
             LoomExp::Symbol(s) => s.clone(),
             LoomExp::Number(n) => n.to_string(),
-            LoomExp::FString(fs) => format!("\"{fs}\""),
+            LoomExp::FString(fs) => fs.clone(),
             LoomExp::List(list) => {
                 let xs: Vec<String> = list.iter()
                                           .map(|x| x.to_string())
@@ -172,6 +172,19 @@ impl Default for LoomEnv {
                     };
                     println!("{speaker}: {dialogue}");
                     Ok(LoomExp::True)
+                }
+            )
+        );
+
+        data.insert(
+            "format".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let mut string = String::new();
+                    for arg in args {
+                        string = format!("{string}{arg}");
+                    }
+                    Ok(LoomExp::FString(string))
                 }
             )
         );

@@ -1,6 +1,6 @@
 (let Skye "Skye Terran")
 Skye: Hello, there!
-Skye: How are you?
+(say Skye (format "My name is " Skye "!"))
 
 (if true (do
     Skye: That's true!
