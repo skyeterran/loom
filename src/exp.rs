@@ -145,15 +145,16 @@ impl Default for LoomEnv {
 
         data.insert(
             "let".to_string(),
-            LoomExp::Func(
+            LoomExp::Macro(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
-                    let Some(LoomExp::FString(k)) = args.first() else {
+                    let Some(LoomExp::Symbol(k)) = args.first() else {
                         return Err(LoomErr::Reason(format!("Expected variable name")));
                     };
                     let Some(v) = args.get(1) else {
                         return Err(LoomErr::Reason(format!("Expected value")));
                     };
-                    env.data.insert(k.clone(), v.clone());
+                    let v_eval = v.eval(env)?;
+                    env.data.insert(k.clone(), v_eval);
                     Ok(LoomExp::True)
                 }
             )

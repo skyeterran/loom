@@ -1,12 +1,9 @@
-(let "Skye" "Skye Terran")
-(let "age" 26)
+(let Skye "Skye Terran")
 Skye: Hello, there!
 Skye: How are you?
 
-(if false (do
-    (print "That's true!")
+(if true (do
+    Skye: That's true!
 )(do
-    (print "That's wrong!")
+    Skye: That's not right.
 ))
-
-(print age)
