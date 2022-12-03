@@ -20,7 +20,7 @@ fn main() -> Result<(), LoomErr> {
                 }
             }
         },
-        _ => { return Ok(()) },
+        _ => {},
     }
 
     Ok(())

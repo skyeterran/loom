@@ -1,1 +1,12 @@
-(print (+ 1 2 3 (+ 420 69)))
+(let "Skye" "Skye Terran")
+(let "age" 26)
+Skye: Hello, there!
+Skye: How are you?
+
+(if false (do
+    (print "That's true!")
+)(do
+    (print "That's wrong!")
+))
+
+(print age)

@@ -3,47 +3,59 @@ use std::collections::HashMap;
 
 #[derive(Clone)]
 pub enum LoomExp {
-    Unit,
-    Nil,
+    True,
+    False,
     Symbol(String),
     Number(f64),
     FString(String),
     List(Vec<LoomExp>),
-    Func(fn(&[LoomExp]) -> Result<LoomExp, LoomErr>),
+    Func(fn(&[LoomExp], &mut LoomEnv) -> Result<LoomExp, LoomErr>),
+    Macro(fn(&[LoomExp], &mut LoomEnv) -> Result<LoomExp, LoomErr>),
 }
 
 impl LoomExp {
     pub fn eval(&self, env: &mut LoomEnv) -> Result<LoomExp, LoomErr> {
         match self {
-            LoomExp::Unit => { Ok(LoomExp::Unit) },
-            LoomExp::Nil => { Ok(LoomExp::Nil) },
+            LoomExp::True => { Ok(LoomExp::True) },
+            LoomExp::False => { Ok(LoomExp::False) },
             LoomExp::Symbol(k) => {
-                env.data.get(k)
-                .ok_or(
-                    LoomErr::Reason(format!("Unexpected symbol: '{}'", k))
-                )
-                .map(|x| x.clone())
+                let sym = match env.data.get(k) {
+                    Some(v) => v,
+                    None => self
+                };
+                Ok(sym.clone())
             },
             LoomExp::Number(_) => { Ok(self.clone()) },
             LoomExp::FString(_) => { Ok(self.clone()) },
             LoomExp::List(list) => {
-                let first_form = list.first()
-                                     .ok_or(LoomErr::Reason(
-                                             "Expected a non-empty list".to_string()
-                                             ))?;
+                let Some(first_form) = list.first() else {
+                    // Empty lists are NIL (false, here)
+                    return Ok(LoomExp::False);
+                };
                 let arg_forms = &list[1..];
+                if let LoomExp::List(_) = first_form {
+                    // If this is a pure list, do NOT evaluate it.
+                    return Ok(LoomExp::True);
+                }
                 let first_eval = first_form.eval(env)?;
                 match first_eval {
                     LoomExp::Func(f) => {
                         let args_eval = arg_forms.iter()
                                                  .map(|x| x.eval(env))
                                                  .collect::<Result<Vec<LoomExp>, LoomErr>>();
-                        f(&args_eval?)
+                        f(&args_eval?, env)
                     },
-                    _ => Err(LoomErr::Reason("First form must be a function name".to_string()))
+                    LoomExp::Macro(m) => {
+                        m(&arg_forms, env)
+                    },
+                    _ => {
+                        // Everything else should be true
+                        Ok(LoomExp::True)
+                    }
                 }
             },
             LoomExp::Func(_) => { Err(LoomErr::Reason("Unexpected form".to_string())) },
+            LoomExp::Macro(_) => { Err(LoomErr::Reason("Unexpected form".to_string())) },
         }
     }
 }
@@ -51,8 +63,8 @@ impl LoomExp {
 impl fmt::Display for LoomExp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let str = match self {
-            LoomExp::Unit => { format!("Unit") },
-            LoomExp::Nil => { format!("Nil") },
+            LoomExp::True => { format!("true") },
+            LoomExp::False => { format!("false") },
             LoomExp::Symbol(s) => s.clone(),
             LoomExp::Number(n) => n.to_string(),
             LoomExp::FString(fs) => format!("\"{fs}\""),
@@ -63,6 +75,7 @@ impl fmt::Display for LoomExp {
                 format!("({})", xs.join(","))
             },
             LoomExp::Func(_) => "Function {}".to_string(),
+            LoomExp::Macro(_) => "Macro {}".to_string(),
         };
 
         write!(f, "{}", str)
@@ -72,8 +85,8 @@ impl fmt::Display for LoomExp {
 impl fmt::Debug for LoomExp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            LoomExp::Unit => { write!(f, "Unit") },
-            LoomExp::Nil => { write!(f, "Nil") },
+            LoomExp::True => { write!(f, "true") },
+            LoomExp::False => { write!(f, "false") },
             LoomExp::Symbol(s) => { write!(f, "Symbol({s})") },
             LoomExp::Number(n) => { write!(f, "Number({n})") },
             LoomExp::FString(fs) => { write!(f, "FString(\"{}\")", fs) },
@@ -85,6 +98,7 @@ impl fmt::Debug for LoomExp {
                 write!(f, "List({})", lines.join(", "))
             },
             LoomExp::Func(_) => { write!(f, "Function call") },
+            LoomExp::Macro(_) => { write!(f, "Macro call") },
         }
     }
 }
@@ -94,7 +108,7 @@ pub enum LoomErr {
     Reason(String),
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct LoomEnv {
     data: HashMap<String, LoomExp>,
 }
@@ -105,7 +119,7 @@ impl Default for LoomEnv {
         data.insert(
             "+".to_string(),
             LoomExp::Func(
-                |args: &[LoomExp]| -> Result<LoomExp, LoomErr> {
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
                     let floats = parse_float_list(args)?;
                     let sum = floats.iter().fold(0.0, |sum, a| sum + a);
 
@@ -117,15 +131,95 @@ impl Default for LoomEnv {
         data.insert(
             "print".to_string(),
             LoomExp::Func(
-                |args: &[LoomExp]| -> Result<LoomExp, LoomErr> {
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
                     for arg in args {
                         match arg {
                             LoomExp::FString(fs) => { println!("{fs}") },
-                            LoomExp::Number(n) => { println!("{n}") },
-                            _ => {},
+                            _ => { println!("{arg}") },
                         }
                     }
-                    Ok(LoomExp::Unit)
+                    Ok(LoomExp::True)
+                }
+            )
+        );
+
+        data.insert(
+            "let".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(LoomExp::FString(k)) = args.first() else {
+                        return Err(LoomErr::Reason(format!("Expected variable name")));
+                    };
+                    let Some(v) = args.get(1) else {
+                        return Err(LoomErr::Reason(format!("Expected value")));
+                    };
+                    env.data.insert(k.clone(), v.clone());
+                    Ok(LoomExp::True)
+                }
+            )
+        );
+
+        data.insert(
+            "say".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(LoomExp::FString(speaker)) = args.first() else {
+                        return Err(LoomErr::Reason(format!("Expected speaker")));
+                    };
+                    let Some(LoomExp::FString(dialogue)) = args.get(1) else {
+                        return Err(LoomErr::Reason(format!("Expected dialogue")));
+                    };
+                    println!("{speaker}: {dialogue}");
+                    Ok(LoomExp::True)
+                }
+            )
+        );
+
+        data.insert(
+            "true".to_string(),
+            LoomExp::True
+        );
+
+        data.insert(
+            "false".to_string(),
+            LoomExp::False
+        );
+
+        data.insert(
+            "if".to_string(),
+            LoomExp::Macro(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(condition) = args.first() else {
+                        return Err(LoomErr::Reason(format!("\"if\" has no condition")));
+                    };
+                    match condition.eval(env)? {
+                        LoomExp::False => {
+                            let Some(falsy) = args.get(2) else {
+                                return Ok(LoomExp::False);
+                            };
+                            Ok(falsy.eval(env)?)
+                        },
+                        _ => {
+                            let Some(truthy) = args.get(1) else {
+                                return Err(
+                                    LoomErr::Reason(format!("\"if\" has no true value"))
+                                );
+                            };
+                            Ok(truthy.eval(env)?)
+                        },
+                    }
+                }
+            )
+        );
+
+        data.insert(
+            "do".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    for arg in args {
+                        arg.eval(env)?;
+                    }
+                    Ok(LoomExp::True)
                 }
             )
         );
