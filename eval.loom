@@ -2,7 +2,7 @@
 Person: Hello, there!
 (say Person (format "My name is " Person "!"))
 
-(if true (do
+(if (random true false) (do
     Person: That's true!
 )(do
     Person: That's not right.

@@ -244,7 +244,7 @@ impl Default for LoomEnv {
             LoomExp::Macro(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
                     let mut rng = rand::thread_rng();
-                    let die = rand::distributions::Uniform::from(0..(args.len() - 1));
+                    let die = rand::distributions::Uniform::from(0..args.len());
                     let choice = die.sample(&mut rng);
                     let Some(chosen_result) = args.get(choice) else {
                         return Err(LoomErr::Reason(format!("Could not choose anything")));
