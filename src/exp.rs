@@ -1,5 +1,6 @@
 use std::fmt;
 use std::collections::HashMap;
+use rand::prelude::*;
 
 #[derive(Clone)]
 pub enum LoomExp {
@@ -234,6 +235,22 @@ impl Default for LoomEnv {
                         arg.eval(env)?;
                     }
                     Ok(LoomExp::True)
+                }
+            )
+        );
+
+        data.insert(
+            "random".to_string(),
+            LoomExp::Macro(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let mut rng = rand::thread_rng();
+                    let die = rand::distributions::Uniform::from(0..(args.len() - 1));
+                    let choice = die.sample(&mut rng);
+                    let Some(chosen_result) = args.get(choice) else {
+                        return Err(LoomErr::Reason(format!("Could not choose anything")));
+                    };
+                    let chosen_eval = chosen_result.eval(env)?;
+                    Ok(chosen_eval.clone())
                 }
             )
         );

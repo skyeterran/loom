@@ -7,3 +7,12 @@ Skye: Hello, there!
 )(do
     Skye: That's not right.
 ))
+
+(random
+    Skye: Woah, cool!
+    Skye: Oh, shit.
+    Skye: Fuck???
+    Skye: What, why?
+    Skye: Aw, shucks.
+    Skye: Noooooooooo!
+)
