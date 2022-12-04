@@ -31,44 +31,44 @@
 (say person_b (format "And my name's " person_b "."))
 
 (match person_a::opinion (
-    ("neutral" (
+    ("neutral" (do
         (say person_a (format "I guess you're alright, " person_b "."))
         (match person_b::opinion (
-            ("neutral" (
+            ("neutral" (do
                 person_b: Yeah, you're fine too. Whatever.
             ))
-            ("love" (
+            ("love" (do
                 person_b: Aw, well... I, uh, feel neutral about you too...
             ))
-            ("hate" (
+            ("hate" (do
                 person_b: Ugh. Whatever, dude.
             ))
         ))
     ))
-    ("love" (
+    ("love" (do
         (say person_a (format "I'm so happy you're here, " person_b "!!!"))
         (match person_b::opinion (
-            ("neutral" (
+            ("neutral" (do
                 person_b: Um, yeah. Glad to be here!
             ))
-            ("love" (
+            ("love" (do
                 person_b: You have no idea how much I agree with you.
             ))
-            ("hate" (
+            ("hate" (do
                 person_b: Dude, step off. Gross.
             ))
         ))
     ))
-    ("hate" (
+    ("hate" (do
         (say person_a (format "You know what, " person_b "? I hate your guts."))
         (match person_b::opinion (
-            ("neutral" (
+            ("neutral" (do
                 person_b: Jeez, man... Where did that come from?
             ))
-            ("love" (
+            ("love" (do
                 person_b: I... I can't believe I loved you.
             ))
-            ("hate" (
+            ("hate" (do
                 person_b: Hey, you know what'd be cool? If you never talked again.
             ))
         ))

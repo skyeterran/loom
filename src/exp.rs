@@ -345,7 +345,7 @@ impl Default for LoomEnv {
                                     LoomErr::Reason(format!("Match path has no body"))
                                 );
                             };
-                            return Ok(path_body.eval(env)?);
+                            return Ok(path_body.eval(env)?)
                         }
                     }
                     Ok(LoomExp::False)
