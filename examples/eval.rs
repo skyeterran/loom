@@ -18,6 +18,7 @@ fn main() -> Result<(), LoomErr> {
                     Ok(_) => {},
                     Err(e) => { println!("Error: {:?}", e) },
                 }
+                //println!("Env:\n{:#?}", env);
             }
         },
         _ => {},

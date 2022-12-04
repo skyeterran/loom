@@ -20,11 +20,14 @@ impl LoomExp {
             LoomExp::True => { Ok(LoomExp::True) },
             LoomExp::False => { Ok(LoomExp::False) },
             LoomExp::Symbol(k) => {
-                let sym = match env.data.get(k) {
-                    Some(v) => v,
-                    None => self
-                };
-                Ok(sym.clone())
+                match env.data.get(k) {
+                    Some(v) => {
+                        Ok(v.clone())
+                    },
+                    None => {
+                        Err(LoomErr::Reason(format!("Unexpected symbol: {k}")))
+                    }
+                }
             },
             LoomExp::Number(_) => { Ok(self.clone()) },
             LoomExp::FString(_) => { Ok(self.clone()) },
@@ -34,10 +37,6 @@ impl LoomExp {
                     return Ok(LoomExp::False);
                 };
                 let arg_forms = &list[1..];
-                if let LoomExp::List(_) = first_form {
-                    // If this is a pure list, do NOT evaluate it.
-                    return Ok(LoomExp::True);
-                }
                 let first_eval = first_form.eval(env)?;
                 match first_eval {
                     LoomExp::Func(f) => {
@@ -50,8 +49,8 @@ impl LoomExp {
                         m(&arg_forms, env)
                     },
                     _ => {
-                        // Everything else should be true
-                        Ok(LoomExp::True)
+                        // If this is a pure list, do NOT evaluate it.
+                        return Ok(self.clone());
                     }
                 }
             },
@@ -73,7 +72,7 @@ impl fmt::Display for LoomExp {
                 let xs: Vec<String> = list.iter()
                                           .map(|x| x.to_string())
                                           .collect();
-                format!("({})", xs.join(","))
+                format!("({})", xs.join(", "))
             },
             LoomExp::Func(_) => "Function {}".to_string(),
             LoomExp::Macro(_) => "Macro {}".to_string(),
@@ -243,10 +242,20 @@ impl Default for LoomEnv {
             "random".to_string(),
             LoomExp::Macro(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(first_arg) = args.first() else {
+                        return Err(
+                            LoomErr::Reason(format!("Not enough arguments to random"))
+                        );
+                    };
+                    let LoomExp::List(list) = first_arg.eval(env)? else {
+                        return Err(
+                            LoomErr::Reason(format!("Random expects a list as input"))
+                        );
+                    };
                     let mut rng = rand::thread_rng();
-                    let die = rand::distributions::Uniform::from(0..args.len());
+                    let die = rand::distributions::Uniform::from(0..list.len());
                     let choice = die.sample(&mut rng);
-                    let Some(chosen_result) = args.get(choice) else {
+                    let Some(chosen_result) = list.get(choice) else {
                         return Err(LoomErr::Reason(format!("Could not choose anything")));
                     };
                     let chosen_eval = chosen_result.eval(env)?;

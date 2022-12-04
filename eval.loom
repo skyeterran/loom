@@ -1,18 +1,30 @@
-(let Person (random "Skye" "Sock" "Salad" "Lee" "Brandon" "Silvia"))
-Person: Hello, there!
-(say Person (format "My name is " Person "!"))
-
-(if (random true false) (do
-    Person: That's true!
-)(do
-    Person: That's not right.
+(let people_a (
+    "Skye"
+    "Sock"
+    "Salad"
+    "Lee"
+    "Brandon"
+    "Silvia"
 ))
+(let person_a (random people_a))
 
-(random
-    Person: Woah, cool!
-    Person: Oh, shit.
-    Person: Fuck???
-    Person: What, why?
-    Person: Aw, shucks.
-    Person: Noooooooooo!
-)
+(let people_b (
+    "Zac"
+    "Brennan"
+    "Frank"
+    "Jerma"
+    "Rachel"
+    "Prime"
+))
+(let person_b (random people_b))
+
+(say person_a (format "My name is " person_a "!"))
+(say person_a (format "And my name's " person_b "."))
+
+(if (random (true false)) (do
+    person_a: That's true!
+    person_b: I guess so.
+)(do
+    person_a: That's not right.
+    person_b: Yeah, for sure.
+))
