@@ -19,7 +19,7 @@
 (let person_b (random people_b))
 
 (say person_a (format "My name is " person_a "!"))
-(say person_a (format "And my name's " person_b "."))
+(say person_b (format "And my name's " person_b "."))
 
 (if (random (true false)) (do
     person_a: That's true!
