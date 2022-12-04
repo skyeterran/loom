@@ -31,57 +31,57 @@
 (say person_b (format "And my name's " person_b "."))
 
 (match person_a::opinion (
-    ("neutral" (do
+    ("neutral" {
         (say person_a (format "I guess you're alright, " person_b "."))
         (match person_b::opinion (
-            ("neutral" (do
+            ("neutral" {
                 person_b: Yeah, you're fine too. Whatever.
                 (let title "TRUE ENDING")
-            ))
-            ("love" (do
+            })
+            ("love" {
                 person_b: Aw, well... I, uh, feel neutral about you too...
                 (let title "MISSED CHANCE")
-            ))
-            ("hate" (do
+            })
+            ("hate" {
                 person_b: Ugh. Whatever, dude.
                 (let title "DESPICABLE LEANINGS")
-            ))
+            })
         ))
-    ))
-    ("love" (do
+    })
+    ("love" {
         (say person_a (format "I'm so happy you're here, " person_b "!!!"))
         (match person_b::opinion (
-            ("neutral" (do
+            ("neutral" {
                 person_b: Um, yeah. Glad to be here!
                 (let title "HIDING AWAY")
-            ))
-            ("love" (do
+            })
+            ("love" {
                 person_b: You have no idea how much I agree with you.
                 (let title "GOOD ENDING")
-            ))
-            ("hate" (do
+            })
+            ("hate" {
                 person_b: Dude, step off. Gross.
                 (let title "REJECTION NEWSLETTER")
-            ))
+            })
         ))
-    ))
-    ("hate" (do
+    })
+    ("hate" {
         (say person_a (format "You know what, " person_b "? I hate your guts."))
         (match person_b::opinion (
-            ("neutral" (do
+            ("neutral" {
                 person_b: Jeez, man... Where did that come from?
                 (let title "A MATURE RESPONSE")
-            ))
-            ("love" (do
+            })
+            ("love" {
                 person_b: I... I can't believe I loved you.
                 (let title "DEEPEST BETRAYAL")
-            ))
-            ("hate" (do
+            })
+            ("hate" {
                 person_b: Hey, you know what'd be cool? If you never talked again.
                 (let title "BAD ENDING")
-            ))
+            })
         ))
-    ))
+    })
 ))
 
 (print (format "==>" title "<=="))
