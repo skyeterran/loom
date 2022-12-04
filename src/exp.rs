@@ -103,6 +103,54 @@ impl fmt::Debug for LoomExp {
     }
 }
 
+impl PartialEq for LoomExp {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            LoomExp::True => {
+                match other {
+                    LoomExp::True => { true },
+                    _ => { false }
+                }
+            },
+            LoomExp::False => {
+                match other {
+                    LoomExp::False => { true },
+                    _ => { false }
+                }
+            },
+            LoomExp::Symbol(s) => {
+                match other {
+                    LoomExp::Symbol(o_s) => { s == o_s },
+                    _ => { false }
+                }
+            },
+            LoomExp::FString(fs) => {
+                match other {
+                    LoomExp::FString(o_fs) => { fs == o_fs },
+                    _ => { false }
+                }
+            },
+            LoomExp::List(list) => {
+                match other {
+                    LoomExp::List(o_list) => {
+                        if list.len() != o_list.len() { return false; }
+                        let mut items_match = true;
+                        for i in 0..(list.len() - 1) {
+                            if list.get(i) != o_list.get(i) {
+                                items_match = false;
+                                break;
+                            }
+                        }
+                        items_match
+                    },
+                    _ => { false }
+                }
+            },
+            _ => { false }
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum LoomErr {
     Reason(String),
@@ -260,6 +308,47 @@ impl Default for LoomEnv {
                     };
                     let chosen_eval = chosen_result.eval(env)?;
                     Ok(chosen_eval.clone())
+                }
+            )
+        );
+
+        data.insert(
+            "match".to_string(),
+            LoomExp::Macro(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(first_arg) = args.first() else {
+                        return Err(
+                            LoomErr::Reason(format!("Not enough arguments to match"))
+                        );
+                    };
+                    let condition = first_arg.eval(env)?;
+                    let Some(LoomExp::List(paths)) = args.get(1) else {
+                        return Err(
+                            LoomErr::Reason(format!("Match expects a list of paths"))
+                        );
+                    };
+                    for path in paths {
+                        let LoomExp::List(path_list) = path else {
+                            return Err(
+                                LoomErr::Reason(format!("Match paths must be lists"))
+                            );
+                        };
+                        let Some(path_cond) = path_list.first() else {
+                            return Err(
+                                LoomErr::Reason(format!("Match path is empty"))
+                            );
+                        };
+                        if *path_cond == condition {
+                            // Evaluate this path
+                            let Some(path_body) = path_list.get(1) else {
+                                return Err(
+                                    LoomErr::Reason(format!("Match path has no body"))
+                                );
+                            };
+                            return Ok(path_body.eval(env)?);
+                        }
+                    }
+                    Ok(LoomExp::False)
                 }
             )
         );
