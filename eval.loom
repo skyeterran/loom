@@ -36,12 +36,15 @@
         (match person_b::opinion (
             ("neutral" (do
                 person_b: Yeah, you're fine too. Whatever.
+                (let title "TRUE ENDING")
             ))
             ("love" (do
                 person_b: Aw, well... I, uh, feel neutral about you too...
+                (let title "MISSED CHANCE")
             ))
             ("hate" (do
                 person_b: Ugh. Whatever, dude.
+                (let title "DESPICABLE LEANINGS")
             ))
         ))
     ))
@@ -50,12 +53,15 @@
         (match person_b::opinion (
             ("neutral" (do
                 person_b: Um, yeah. Glad to be here!
+                (let title "HIDING AWAY")
             ))
             ("love" (do
                 person_b: You have no idea how much I agree with you.
+                (let title "GOOD ENDING")
             ))
             ("hate" (do
                 person_b: Dude, step off. Gross.
+                (let title "REJECTION NEWSLETTER")
             ))
         ))
     ))
@@ -64,13 +70,18 @@
         (match person_b::opinion (
             ("neutral" (do
                 person_b: Jeez, man... Where did that come from?
+                (let title "A MATURE RESPONSE")
             ))
             ("love" (do
                 person_b: I... I can't believe I loved you.
+                (let title "DEEPEST BETRAYAL")
             ))
             ("hate" (do
                 person_b: Hey, you know what'd be cool? If you never talked again.
+                (let title "BAD ENDING")
             ))
         ))
     ))
 ))
+
+(print (format "==>" title "<=="))
