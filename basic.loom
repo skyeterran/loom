@@ -1,0 +1,22 @@
+Loom: Hello, there!
+Loom: How are you? (good/bad)
+(match input (
+    ("good" {
+        You: I'm doing well!
+        Loom: That's great to hear!
+    })
+    ("bad" {
+        You: I don't feel great, honestly.
+        Loom: Oh no! What's wrong? (dog/sad)
+        (match input (
+            ("dog" {
+                You: A dog ate my lunch.
+                Loom: ...How did that even happen?
+            })
+            ("sad" {
+                You: I'm just feeling down today.
+                Loom: Well, just know that I care about you. *hug*
+            })
+        ))
+    })
+))
