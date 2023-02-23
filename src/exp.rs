@@ -6,6 +6,7 @@ use rand::prelude::*;
 pub enum LoomExp {
     True,
     Nil,
+    Error,
     Symbol(String),
     Number(f64),
     FString(String),
@@ -19,6 +20,7 @@ impl LoomExp {
         match self {
             LoomExp::True => { Ok(LoomExp::True) },
             LoomExp::Nil => { Ok(LoomExp::Nil) },
+            LoomExp::Error => { Ok(LoomExp::Error) },
             LoomExp::Symbol(k) => {
                 match env.data.get(k) {
                     Some(v) => {
@@ -33,7 +35,7 @@ impl LoomExp {
             LoomExp::FString(_) => { Ok(self.clone()) },
             LoomExp::List(list) => {
                 let Some(first_form) = list.first() else {
-                    // Empty lists are NIL (false, here)
+                    // Empty lists are nil
                     return Ok(LoomExp::Nil);
                 };
                 let arg_forms = &list[1..];
@@ -63,8 +65,9 @@ impl LoomExp {
 impl fmt::Display for LoomExp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let str = match self {
-            LoomExp::True => { format!("true") },
-            LoomExp::Nil => { format!("false") },
+            LoomExp::True => { format!("True") },
+            LoomExp::Nil => { format!("Nil") },
+            LoomExp::Error => { format!("Error") },
             LoomExp::Symbol(s) => s.clone(),
             LoomExp::Number(n) => n.to_string(),
             LoomExp::FString(fs) => fs.clone(),
@@ -85,8 +88,9 @@ impl fmt::Display for LoomExp {
 impl fmt::Debug for LoomExp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            LoomExp::True => { write!(f, "true") },
-            LoomExp::Nil => { write!(f, "false") },
+            LoomExp::True => { write!(f, "True") },
+            LoomExp::Nil => { write!(f, "Nil") },
+            LoomExp::Error => { write!(f, "Error") },
             LoomExp::Symbol(s) => { write!(f, "Symbol({s})") },
             LoomExp::Number(n) => { write!(f, "Number({n})") },
             LoomExp::FString(fs) => { write!(f, "FString(\"{}\")", fs) },
@@ -177,7 +181,7 @@ impl Default for LoomEnv {
         );
 
         data.insert(
-            "print".to_string(),
+            "say".to_string(),
             LoomExp::Func(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
                     for arg in args {
@@ -187,6 +191,29 @@ impl Default for LoomEnv {
                         }
                     }
                     Ok(LoomExp::True)
+                }
+            )
+        );
+
+        data.insert(
+            "debug".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(x) = args.first() else {
+                        return Err(LoomErr::Reason(format!("Can't debug nothing!")));
+                    };
+                    println!("{:?}", x);
+                    Ok(LoomExp::Nil)
+                }
+            )
+        );
+
+        data.insert(
+            "env".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    println!("{:#?}", env);
+                    Ok(LoomExp::Nil)
                 }
             )
         );
@@ -203,22 +230,6 @@ impl Default for LoomEnv {
                     };
                     let v_eval = v.eval(env)?;
                     env.data.insert(k.clone(), v_eval);
-                    Ok(LoomExp::True)
-                }
-            )
-        );
-
-        data.insert(
-            "say".to_string(),
-            LoomExp::Func(
-                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
-                    let Some(LoomExp::FString(speaker)) = args.first() else {
-                        return Err(LoomErr::Reason(format!("Expected speaker")));
-                    };
-                    let Some(LoomExp::FString(dialogue)) = args.get(1) else {
-                        return Err(LoomErr::Reason(format!("Expected dialogue")));
-                    };
-                    println!("{speaker}: {dialogue}");
                     Ok(LoomExp::True)
                 }
             )
@@ -243,8 +254,18 @@ impl Default for LoomEnv {
         );
 
         data.insert(
-            "false".to_string(),
+            "nil".to_string(),
             LoomExp::Nil
+        );
+
+        data.insert(
+            "exit".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    println!("Goodbye for now!");
+                    std::process::exit(0);
+                }
+            )
         );
 
         data.insert(

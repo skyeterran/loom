@@ -21,17 +21,20 @@ fn main() -> Result<(), LoomErr> {
                 };
                 match input {
                     "q" => {
-                        println!("Farewell, traveler!");
+                        println!("Farewell!");
                         break;
-                    },
-                    "env" => {
-                        println!("{:#?}", env);
                     },
                     _ => {
                         let tokens = tokenize(input.to_string()).unwrap();
-                        let exp = tokens_to_exp(tokens).unwrap();
-                        let result = exp.eval(&mut env).unwrap();
-                        //println!("{:?}", result);
+                        match tokens_to_exp(tokens) {
+                            Ok(exp) => {
+                                    match exp.eval(&mut env) {
+                                    Ok(_) => {},
+                                    Err(e) => { println!("EVALUATION ERROR:\n{:?}", e); }
+                                }
+                            }
+                            Err(e) => { println!("PARSING ERROR:\n{:?}", e); }
+                        }
                     },
                 }
             }
