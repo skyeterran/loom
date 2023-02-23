@@ -12,7 +12,7 @@ enum Token {
 
 #[derive(Debug)]
 enum Object {
-    Void,
+    Nil,
     Integer(i64),
     Bool(bool),
     LitString(String),

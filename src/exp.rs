@@ -5,7 +5,7 @@ use rand::prelude::*;
 #[derive(Clone)]
 pub enum LoomExp {
     True,
-    False,
+    Nil,
     Symbol(String),
     Number(f64),
     FString(String),
@@ -18,7 +18,7 @@ impl LoomExp {
     pub fn eval(&self, env: &mut LoomEnv) -> Result<LoomExp, LoomErr> {
         match self {
             LoomExp::True => { Ok(LoomExp::True) },
-            LoomExp::False => { Ok(LoomExp::False) },
+            LoomExp::Nil => { Ok(LoomExp::Nil) },
             LoomExp::Symbol(k) => {
                 match env.data.get(k) {
                     Some(v) => {
@@ -34,7 +34,7 @@ impl LoomExp {
             LoomExp::List(list) => {
                 let Some(first_form) = list.first() else {
                     // Empty lists are NIL (false, here)
-                    return Ok(LoomExp::False);
+                    return Ok(LoomExp::Nil);
                 };
                 let arg_forms = &list[1..];
                 let first_eval = first_form.eval(env)?;
@@ -64,7 +64,7 @@ impl fmt::Display for LoomExp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let str = match self {
             LoomExp::True => { format!("true") },
-            LoomExp::False => { format!("false") },
+            LoomExp::Nil => { format!("false") },
             LoomExp::Symbol(s) => s.clone(),
             LoomExp::Number(n) => n.to_string(),
             LoomExp::FString(fs) => fs.clone(),
@@ -86,7 +86,7 @@ impl fmt::Debug for LoomExp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             LoomExp::True => { write!(f, "true") },
-            LoomExp::False => { write!(f, "false") },
+            LoomExp::Nil => { write!(f, "false") },
             LoomExp::Symbol(s) => { write!(f, "Symbol({s})") },
             LoomExp::Number(n) => { write!(f, "Number({n})") },
             LoomExp::FString(fs) => { write!(f, "FString(\"{}\")", fs) },
@@ -112,9 +112,9 @@ impl PartialEq for LoomExp {
                     _ => { false }
                 }
             },
-            LoomExp::False => {
+            LoomExp::Nil => {
                 match other {
-                    LoomExp::False => { true },
+                    LoomExp::Nil => { true },
                     _ => { false }
                 }
             },
@@ -244,7 +244,7 @@ impl Default for LoomEnv {
 
         data.insert(
             "false".to_string(),
-            LoomExp::False
+            LoomExp::Nil
         );
 
         data.insert(
@@ -255,9 +255,9 @@ impl Default for LoomEnv {
                         return Err(LoomErr::Reason(format!("\"if\" has no condition")));
                     };
                     match condition.eval(env)? {
-                        LoomExp::False => {
+                        LoomExp::Nil => {
                             let Some(falsy) = args.get(2) else {
-                                return Ok(LoomExp::False);
+                                return Ok(LoomExp::Nil);
                             };
                             Ok(falsy.eval(env)?)
                         },
@@ -348,7 +348,7 @@ impl Default for LoomEnv {
                             return Ok(path_body.eval(env)?)
                         }
                     }
-                    Ok(LoomExp::False)
+                    Ok(LoomExp::Nil)
                 }
             )
         );
