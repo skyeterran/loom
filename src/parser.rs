@@ -188,5 +188,11 @@ pub fn tokens_to_exp(tokens: Vec<Token>) -> Result<LoomExp, ParseError> {
         }
     }
 
-    Ok(LoomExp::List(list))
+    // TODO: This is a disaster. We shouldn't be constructing a list at all unless we know we need
+    // one at all.
+    if (list.len() <= 1) {
+        Ok(list.into_iter().next().unwrap())
+    } else {
+        Ok(LoomExp::List(list))
+    }
 }

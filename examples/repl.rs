@@ -29,7 +29,7 @@ fn main() -> Result<(), LoomErr> {
                         match tokens_to_exp(tokens) {
                             Ok(exp) => {
                                     match exp.eval(&mut env) {
-                                    Ok(_) => {},
+                                    Ok(r) => { println!("{r}"); },
                                     Err(e) => { println!("EVALUATION ERROR:\n{:?}", e); }
                                 }
                             }

@@ -1,19 +1,9 @@
-Shopkeep: Ah, a customer!
-Shopkeep: Welcome to my humble little corner of the dungeon.
-Shopkeep: What do you desire?
+(let cat #sock)
 
-(let desire "peace")
+(let trait (match cat
+                  (#sock #cute)
+                  (#salad #smart)))
 
-(match desire
-    ("war" (say YOU "I crave blood."))
-    ("peace" (say YOU "I only want to help my fellow man."))
-)
-
-(match desire
-    ("war" (say Shopkeep "Ooh, a warrior! I know just what you need..."))
-    ("peace" (say Shopkeep "So you're a peaceful one! I have just the thing for you..."))
-)
-
-NOONE: The shopkeep pulls a cat out of one of the various shelves behind them.
-Shopkeep: This loathsome creature!
-NOONE: The cat is very cute.
+(match trait
+       (#cute (say "That's a cute kitty!"))
+       (#smart (say "Woah, that's a lawyer.")))

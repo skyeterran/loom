@@ -353,11 +353,7 @@ impl Default for LoomEnv {
                         );
                     };
                     let condition = first_arg.eval(env)?;
-                    let Some(LoomExp::List(paths)) = args.get(1) else {
-                        return Err(
-                            LoomErr::Reason(format!("Match expects a list of paths"))
-                        );
-                    };
+                    let (_, paths): (&LoomExp, &[LoomExp]) = args.split_first().unwrap();
                     for path in paths {
                         let LoomExp::List(path_list) = path else {
                             return Err(
