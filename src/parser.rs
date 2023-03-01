@@ -37,6 +37,7 @@ pub enum Token {
     RParen,
     Number(f64),
     Symbol(String),
+    Name(String),
     StringToken(String),
 }
 
@@ -96,7 +97,11 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
                                 tokens.push(Number(n));
                             },
                             Err(_) => {
-                                tokens.push(Symbol(word.to_string()));
+                                if word.chars().next() == Some('#') {
+                                    tokens.push(Name(word[1..word.len()].to_string()));
+                                } else {
+                                    tokens.push(Symbol(word.to_string()));
+                                }
                             }
                         }
                     },
@@ -152,6 +157,9 @@ pub fn tokens_to_exp(tokens: Vec<Token>) -> Result<LoomExp, ParseError> {
                 },
                 Symbol(s) => {
                     list.push(LoomExp::Symbol(s));
+                },
+                Name(n) => {
+                    list.push(LoomExp::Name(n));
                 },
                 Number(n) => {
                     list.push(LoomExp::Number(n));

@@ -8,6 +8,7 @@ pub enum LoomExp {
     Nil,
     Error,
     Symbol(String),
+    Name(String),
     Number(f64),
     FString(String),
     List(Vec<LoomExp>),
@@ -31,6 +32,7 @@ impl LoomExp {
                     }
                 }
             },
+            LoomExp::Name(_) => { Ok(self.clone()) },
             LoomExp::Number(_) => { Ok(self.clone()) },
             LoomExp::FString(_) => { Ok(self.clone()) },
             LoomExp::List(list) => {
@@ -69,6 +71,7 @@ impl fmt::Display for LoomExp {
             LoomExp::Nil => { format!("Nil") },
             LoomExp::Error => { format!("Error") },
             LoomExp::Symbol(s) => s.clone(),
+            LoomExp::Name(n) => format!("#{n}"),
             LoomExp::Number(n) => n.to_string(),
             LoomExp::FString(fs) => fs.clone(),
             LoomExp::List(list) => {
@@ -92,6 +95,7 @@ impl fmt::Debug for LoomExp {
             LoomExp::Nil => { write!(f, "Nil") },
             LoomExp::Error => { write!(f, "Error") },
             LoomExp::Symbol(s) => { write!(f, "Symbol({s})") },
+            LoomExp::Name(n) => { write!(f, "Name({n})") },
             LoomExp::Number(n) => { write!(f, "Number({n})") },
             LoomExp::FString(fs) => { write!(f, "FString(\"{}\")", fs) },
             LoomExp::List(list) => {
@@ -125,6 +129,12 @@ impl PartialEq for LoomExp {
             LoomExp::Symbol(s) => {
                 match other {
                     LoomExp::Symbol(o_s) => { s == o_s },
+                    _ => { false }
+                }
+            },
+            LoomExp::Name(n) => {
+                match other {
+                    LoomExp::Name(o_n) => { n == o_n },
                     _ => { false }
                 }
             },
