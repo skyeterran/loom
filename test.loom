@@ -5,5 +5,23 @@
                   (#salad #smart)))
 
 (match trait
-       (#cute (say "That's a cute kitty!"))
-       (#smart (say "Woah, that's a lawyer.")))
+       (#cute (print "That's a cute kitty!"))
+       (#smart (print "Woah, that's a lawyer.")))
+
+(let default-stats (object (num_limbs 4)
+                           (hacking 20)
+                           (power 40)))
+
+(let user (object (species #dog)
+                  (name "Skye")
+                  (age 26)
+                  (stats default-stats)))
+
+(let cat (object (species #cat)
+                 (name "Salad")
+                 (age 6)
+                 (stats default-stats)))
+
+(print (get cat name))
+(print (get user name))
+(print (get user stats hacking))

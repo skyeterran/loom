@@ -11,6 +11,7 @@ pub enum LoomExp {
     Name(String),
     Number(f64),
     FString(String),
+    Object(HashMap<String, LoomExp>),
     List(Vec<LoomExp>),
     Func(fn(&[LoomExp], &mut LoomEnv) -> Result<LoomExp, LoomErr>),
     Macro(fn(&[LoomExp], &mut LoomEnv) -> Result<LoomExp, LoomErr>),
@@ -58,6 +59,7 @@ impl LoomExp {
                     }
                 }
             },
+            LoomExp::Object(_) => { Ok(self.clone()) },
             LoomExp::Func(_) => { Err(LoomErr::Reason("Unexpected form".to_string())) },
             LoomExp::Macro(_) => { Err(LoomErr::Reason("Unexpected form".to_string())) },
         }
@@ -80,6 +82,7 @@ impl fmt::Display for LoomExp {
                                           .collect();
                 format!("({})", xs.join(", "))
             },
+            LoomExp::Object(_) => "Object {}".to_string(),
             LoomExp::Func(_) => "Function {}".to_string(),
             LoomExp::Macro(_) => "Macro {}".to_string(),
         };
@@ -105,6 +108,7 @@ impl fmt::Debug for LoomExp {
                 }
                 write!(f, "List({})", lines.join(", "))
             },
+            LoomExp::Object(obj) => { write!(f, "Object({:?})", obj) },
             LoomExp::Func(_) => { write!(f, "Function call") },
             LoomExp::Macro(_) => { write!(f, "Macro call") },
         }
@@ -160,6 +164,12 @@ impl PartialEq for LoomExp {
                     _ => { false }
                 }
             },
+            LoomExp::Object(obj) => {
+                match other {
+                    LoomExp::Object(o_obj) => { obj == o_obj },
+                    _ => { false }
+                }
+            }
             _ => { false }
         }
     }
@@ -191,7 +201,7 @@ impl Default for LoomEnv {
         );
 
         data.insert(
-            "say".to_string(),
+            "print".to_string(),
             LoomExp::Func(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
                     for arg in args {
@@ -300,6 +310,62 @@ impl Default for LoomEnv {
                             };
                             Ok(truthy.eval(env)?)
                         },
+                    }
+                }
+            )
+        );
+        
+        data.insert(
+            "object".to_string(),
+            LoomExp::Macro(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let mut hashmap: HashMap<String, LoomExp> = HashMap::new();
+                    for arg in args {
+                        match arg {
+                            LoomExp::List(l) => {
+                                let Some(LoomExp::Symbol(key)) = l.first() else {
+                                    return Err(LoomErr::Reason(format!("Incorrect type for object variable key")));
+                                };
+                                let Some(value) = l.get(1) else {
+                                    return Err(LoomErr::Reason(format!("Missing value argument for object!")));
+                                };
+                                hashmap.insert(key.clone(), value.eval(env)?);
+                            },
+                            _ => { return Err(LoomErr::Reason(format!("object arguments must be lists of key-value pairs"))); }
+                        }
+                    }
+                    Ok(LoomExp::Object(hashmap))
+                }
+            )
+        );
+
+        data.insert(
+            // (get object #key)
+            "get".to_string(),
+            LoomExp::Macro(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(obj_sym) = args.first() else {
+                        return Err(LoomErr::Reason(format!("First argument to get is missing")));
+                    };
+                    let LoomExp::Object(obj) = obj_sym.eval(env)? else {
+                        return Err(LoomErr::Reason(format!("First argument to get is not an object!")));
+                    };
+                    let Some(LoomExp::Symbol(key)) = args.get(1) else {
+                        return Err(LoomErr::Reason(format!("Second argument to get must be a name")));
+                    };
+                    let mut value: Option<&LoomExp> = obj.get(key).clone();
+                    for name in args[2..args.len()].iter() {
+                        let LoomExp::Symbol(key) = name else {
+                            return Err(LoomErr::Reason(format!("Bad argument!")));
+                        };
+                        let Some(LoomExp::Object(map)) = value else {
+                            return Err(LoomErr::Reason(format!("Bad thing!")));
+                        };
+                        value = map.get(key).clone();
+                    }
+                    match value {
+                        Some(contents) => Ok(contents.clone()),
+                        None => Ok(LoomExp::Nil)
                     }
                 }
             )
