@@ -156,7 +156,15 @@ pub fn tokens_to_exp(tokens: Vec<Token>) -> Result<LoomExp, ParseError> {
                     return Err(UnexpectedRParen);
                 },
                 Symbol(s) => {
-                    list.push(LoomExp::Symbol(s));
+                    if s.contains(".") {
+                        let mut accessors: Vec<LoomExp> = vec![LoomExp::Symbol("get".to_string())];
+                        for a in s.split(".") {
+                            accessors.push(LoomExp::Symbol(a.to_string()));
+                        }
+                        list.push(LoomExp::List(accessors))
+                    } else {
+                        list.push(LoomExp::Symbol(s));
+                    }
                 },
                 Name(n) => {
                     list.push(LoomExp::Name(n));
