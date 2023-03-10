@@ -384,6 +384,19 @@ impl Default for LoomEnv {
         );
 
         data.insert(
+            "list".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let mut list: Vec<LoomExp> = Vec::new();
+                    for arg in args {
+                        list.push(arg.clone());
+                    }
+                    Ok(LoomExp::List(list))
+                }
+            )
+        );
+
+        data.insert(
             "random".to_string(),
             LoomExp::Macro(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
