@@ -60,6 +60,8 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
                 },
                 '{' => { words.push_str(" ( object ") },
                 '}' => { words.push_str(" ) ") },
+                '[' => { words.push_str(" ( list ") },
+                ']' => { words.push_str(" ) ") },
                 _ => { words.push(char) }
             }
         } else {
