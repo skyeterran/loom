@@ -53,9 +53,10 @@ Get Rust. Run `cargo run --example repl` from its directory. Have fun!
 ```
 
 ### get
-`get` can retrieve values from deeply nested objects. In this case, we can get the cat's `int` value out of two nested objects:
+`get` can retrieve values from deeply nested objects. Dot-separated keys are valid shorthand. In this case, we can get the cat's `int` value out of two nested objects:
 ```
 (get kitty stats int)
+kitty.stats.int
 ```
 
 ### write
