@@ -12,6 +12,7 @@
     (species #dog)
     (name "Skye")
     (age 26)
+    (weights [0 4 1 5])
     (stats (object (dex 4)
         (int 14)
         (str 8)))))
@@ -20,6 +21,7 @@
     (species #cat)
     (name "Salad")
     (age 6)
+    (weights [0 2 3 1])
     (stats (object
         (dex 18)
         (int 9)

@@ -1,4 +1,5 @@
 use std::fmt;
+use std::path::Path;
 use std::collections::HashMap;
 use rand::prelude::*;
 
@@ -71,18 +72,18 @@ impl LoomExp {
 impl fmt::Display for LoomExp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let str = match self {
-            LoomExp::True => { format!("True") },
-            LoomExp::Nil => { format!("Nil") },
-            LoomExp::Error => { format!("Error") },
+            LoomExp::True => { format!("true") },
+            LoomExp::Nil => { format!("nil") },
+            LoomExp::Error => { format!("error") },
             LoomExp::Symbol(s) => s.clone(),
             LoomExp::Name(n) => format!("#{n}"),
             LoomExp::Number(n) => n.to_string(),
-            LoomExp::FString(fs) => fs.clone(),
+            LoomExp::FString(fs) => format!("\"{fs}\""),
             LoomExp::List(list) => {
                 let xs: Vec<String> = list.iter()
                                           .map(|x| x.to_string())
                                           .collect();
-                format!("[{}]", xs.join(", "))
+                format!("[{}]", xs.join(" "))
             },
             LoomExp::Object(map) => {
                 let mut obj = "(object".to_string();
@@ -261,9 +262,8 @@ impl Default for LoomEnv {
         );
 
         data.insert(
-            // (load "test.loom")
-            // TODO: Make this load into an object instead of running it
-            "load".to_string(),
+            // (run "test.loom")
+            "run".to_string(),
             LoomExp::Func(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
                     let Some(LoomExp::FString(filename)) = args.first() else {
@@ -284,6 +284,44 @@ impl Default for LoomEnv {
                         },
                         _ => {},
                     }
+                    Ok(LoomExp::Nil)
+                }
+            )
+        );
+            
+        data.insert(
+            // (load "test.loom")
+            // TODO: Make this load into an object instead of running it
+            "load".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(LoomExp::FString(filename)) = args.first() else {
+                        return Err(LoomErr::Reason(format!("Expected a filename!")));
+                    };
+                    let source = std::fs::read_to_string(filename).expect(format!("Couldn't load {filename}").as_str());
+                    let tokens = crate::parser::tokenize(source).unwrap();
+                    let exp = tokens_to_exp(tokens, false).unwrap();
+                    exp.eval(env)
+                }
+            )
+        );
+
+        data.insert(
+            // (write x "x.loom")
+            // TODO: Make this load into an object instead of running it
+            "write".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(LoomExp::FString(filename)) = args.first() else {
+                        return Err(LoomErr::Reason(format!("Expected a filename!")));
+                    };
+                    let mut data: Vec<String> = Vec::new();
+                    for exp in args[1..args.len()].iter() {
+                        data.push(format!("{exp}"));
+                    }
+                    let path = Path::new(filename);
+                    std::fs::create_dir_all(path.parent().to_owned().expect("Couldn't get parent path!")).expect("Couldn't create parent path!");
+                    std::fs::write(filename, data.join("\n")).expect("Unable to write file!");
                     Ok(LoomExp::Nil)
                 }
             )
