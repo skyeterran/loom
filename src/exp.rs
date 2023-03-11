@@ -495,7 +495,7 @@ impl Default for LoomEnv {
 
         data.insert(
             "eval".to_string(),
-            LoomExp::Macro(
+            LoomExp::Func(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
                     args.first().unwrap().eval(env)
                 }
@@ -511,6 +511,26 @@ impl Default for LoomEnv {
                         list.push(arg.clone());
                     }
                     Ok(LoomExp::List(list))
+                }
+            )
+        );
+
+        data.insert(
+            "quote".to_string(),
+            LoomExp::Macro(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    if args.len() > 1 {
+                        let mut list: Vec<LoomExp> = Vec::new();
+                        for arg in args {
+                            list.push(arg.clone());
+                        }
+                        Ok(LoomExp::List(list))
+                    } else {
+                        match args.first() {
+                            Some(exp) => Ok(exp.clone()),
+                            None => Ok(LoomExp::Nil)
+                        }
+                    }
                 }
             )
         );

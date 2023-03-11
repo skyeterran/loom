@@ -44,9 +44,9 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
                     in_string = true;
                     words.push_str(" \" ");
                 },
-                '{' => { words.push_str(" ( object ") },
+                '{' => { words.push_str(" ( eval ") },
                 '}' => { words.push_str(" ) ") },
-                '[' => { words.push_str(" ( list ") },
+                '[' => { words.push_str(" ( quote ") },
                 ']' => { words.push_str(" ) ") },
                 _ => { words.push(char) }
             }
