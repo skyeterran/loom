@@ -3,21 +3,7 @@ use std::num::ParseFloatError;
 
 /// Takes a Loom source file and formats all dialogue into Lispy function calls
 fn lispify(source: String) -> String {
-    let mut new_lines: Vec<String> = Vec::new();
-
-    for raw_line in source.split("\n") {
-        let line = raw_line.trim();
-
-        // Try to interpret this line as dialogue, otherwise treat it normally
-        let Some((speaker, content)) = line.split_once(": ") else {
-            new_lines.push(line.to_string());
-            continue;
-        };
-
-        new_lines.push(format!("(say {speaker} \"{content}\")"));
-    }
-
-    new_lines.join("")
+    source.replace("\n", "")
 }
 
 #[derive(Debug)]
@@ -135,7 +121,7 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
 }
 
 // Creates an object from a stream of tokens
-pub fn tokens_to_exp(tokens: Vec<Token>) -> Result<LoomExp, ParseError> {
+pub fn tokens_to_exp(tokens: Vec<Token>, is_list: bool) -> Result<LoomExp, ParseError> {
     use ParseError::*;
     use Token::*;
 
@@ -192,7 +178,7 @@ pub fn tokens_to_exp(tokens: Vec<Token>) -> Result<LoomExp, ParseError> {
             } else {
                 // Parse the substream and clear it
                 consume_substream = false;
-                list.push(tokens_to_exp(substream.clone())?);
+                list.push(tokens_to_exp(substream.clone(), true)?);
                 substream = Vec::new();
             }
         }
@@ -200,9 +186,9 @@ pub fn tokens_to_exp(tokens: Vec<Token>) -> Result<LoomExp, ParseError> {
 
     // TODO: This is a disaster. We shouldn't be constructing a list at all unless we know we need
     // one at all.
-    if (list.len() <= 1) {
-        Ok(list.into_iter().next().unwrap())
-    } else {
+    if is_list {
         Ok(LoomExp::List(list))
+    } else {
+        Ok(list.first().unwrap().clone())
     }
 }

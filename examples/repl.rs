@@ -26,8 +26,9 @@ fn main() -> Result<(), LoomErr> {
                     },
                     _ => {
                         let tokens = tokenize(input.to_string()).unwrap();
-                        match tokens_to_exp(tokens) {
+                        match tokens_to_exp(tokens, false) {
                             Ok(exp) => {
+                                    //println!("{:?}", exp);
                                     match exp.eval(&mut env) {
                                     Ok(r) => { println!("{r}"); },
                                     Err(e) => { println!("EVALUATION ERROR:\n{:?}", e); }

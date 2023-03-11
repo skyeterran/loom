@@ -2,6 +2,8 @@ use std::fmt;
 use std::collections::HashMap;
 use rand::prelude::*;
 
+use crate::parser::tokens_to_exp;
+
 #[derive(Clone)]
 pub enum LoomExp {
     True,
@@ -80,9 +82,29 @@ impl fmt::Display for LoomExp {
                 let xs: Vec<String> = list.iter()
                                           .map(|x| x.to_string())
                                           .collect();
-                format!("({})", xs.join(", "))
+                format!("[{}]", xs.join(", "))
             },
-            LoomExp::Object(_) => "Object {}".to_string(),
+            LoomExp::Object(map) => {
+                let mut obj = "(object".to_string();
+                for (i, (key, value)) in map.iter().enumerate() {
+                    let mut value_text = format!("{value}");
+                    match value {
+                        LoomExp::Object(_) => {
+                            value_text = value_text.replace("\n", "\n    ");
+                        },
+                        _ => {}
+                    }
+                    /*if i == 0 {
+                        obj = format!("{obj} ({key} {value_text})");
+                    } else {
+                        let indent = " ".repeat(4);
+                        obj = format!("{obj}\n{indent}({key} {value_text})");
+                    }*/
+                    let indent = " ".repeat(4);
+                    obj = format!("{obj}\n{indent}({key} {value_text})");
+                }
+                format!("{obj}\n)")
+            },
             LoomExp::Func(_) => "Function {}".to_string(),
             LoomExp::Macro(_) => "Macro {}".to_string(),
         };
@@ -108,7 +130,7 @@ impl fmt::Debug for LoomExp {
                 }
                 write!(f, "List({})", lines.join(", "))
             },
-            LoomExp::Object(obj) => { write!(f, "Object({:?})", obj) },
+            LoomExp::Object(obj) => { write!(f, "Object({:#?})", obj) },
             LoomExp::Func(_) => { write!(f, "Function call") },
             LoomExp::Macro(_) => { write!(f, "Macro call") },
         }
@@ -210,7 +232,7 @@ impl Default for LoomEnv {
                             _ => { println!("{arg}") },
                         }
                     }
-                    Ok(LoomExp::True)
+                    Ok(LoomExp::Nil)
                 }
             )
         );
@@ -239,6 +261,35 @@ impl Default for LoomEnv {
         );
 
         data.insert(
+            // (load "test.loom")
+            // TODO: Make this load into an object instead of running it
+            "load".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(LoomExp::FString(filename)) = args.first() else {
+                        return Err(LoomErr::Reason(format!("Expected a filename!")));
+                    };
+                    let source = std::fs::read_to_string(filename).expect(format!("Couldn't load {filename}").as_str());
+                    let tokens = crate::parser::tokenize(source).unwrap();
+                    let exp = tokens_to_exp(tokens, true).unwrap();
+                    match exp {
+                        LoomExp::List(list) => {
+                            for item in list {
+                                match item.eval(env) {
+                                    Ok(_) => {},
+                                    Err(e) => { println!("Error: {:?}", e) },
+                                }
+                                //println!("Env:\n{:#?}", env);
+                            }
+                        },
+                        _ => {},
+                    }
+                    Ok(LoomExp::Nil)
+                }
+            )
+        );
+
+        data.insert(
             "let".to_string(),
             LoomExp::Macro(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
@@ -250,7 +301,7 @@ impl Default for LoomEnv {
                     };
                     let v_eval = v.eval(env)?;
                     env.data.insert(k.clone(), v_eval);
-                    Ok(LoomExp::True)
+                    Ok(LoomExp::Nil)
                 }
             )
         );
@@ -372,13 +423,10 @@ impl Default for LoomEnv {
         );
 
         data.insert(
-            "do".to_string(),
-            LoomExp::Func(
+            "eval".to_string(),
+            LoomExp::Macro(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
-                    for arg in args {
-                        arg.eval(env)?;
-                    }
-                    Ok(LoomExp::True)
+                    args.first().unwrap().eval(env)
                 }
             )
         );

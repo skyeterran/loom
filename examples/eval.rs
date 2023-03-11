@@ -8,7 +8,7 @@ use loom::exp::{LoomEnv, LoomExp, LoomErr};
 fn main() -> Result<(), LoomErr> {
     let source = fs::read_to_string("test.loom").expect("Couldn't load file!");
     let tokens = tokenize(source).unwrap();
-    let exp = tokens_to_exp(tokens).unwrap();
+    let exp = tokens_to_exp(tokens, true).unwrap();
     let mut env = LoomEnv::default();
 
     match exp {
