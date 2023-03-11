@@ -340,6 +340,21 @@ impl Default for LoomEnv {
         );
 
         data.insert(
+            "=".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(first) = args.first() else {
+                        return Err(LoomErr::Reason(format!("Not enough arguments to = !")));
+                    };
+                    for other in args[1..args.len()].iter() {
+                        if first != other { return Ok(LoomExp::Nil); }
+                    }
+                    Ok(LoomExp::True)
+                }
+            )
+        );
+
+        data.insert(
             "if".to_string(),
             LoomExp::Macro(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
