@@ -1,7 +1,10 @@
-# 🧶 Loom: A narrative system for {your_game}
-Loom is a thing!
+# 🧶 Loom
+Loom weaves itself! I will write a more helpful page later!
 
-## How 2 write it
+## How 2 run
+Get Rust. Run `cargo run --example repl` from its directory. Have fun!
+
+## How 2 write
 ### let
 `let` defines a global variable.
 ```
@@ -57,4 +60,10 @@ Loom is a thing!
 `load` will load a value from Loom code in a file.
 ```
 (load "fruits.loom")
+```
+
+### run
+`run` will run a file as a script.
+```
+(run "script.loom")
 ```
