@@ -20,7 +20,7 @@ Get Rust. Run `cargo run --example repl` from its directory. Have fun!
 ```
 (if (= temperature #hot)
     (let sweating true)
-    (let sweating false))
+    (let sweating nil))
 ```
 
 ### match
@@ -41,7 +41,7 @@ Get Rust. Run `cargo run --example repl` from its directory. Have fun!
 ```
 
 ### object
-`object` will create combine data into a group of key-value pairs.
+`object` will combine data into a group of key-value pairs.
 ```
 (let kitty (object
     (species #cat)
