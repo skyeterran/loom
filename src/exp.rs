@@ -355,6 +355,24 @@ impl Default for LoomEnv {
         );
 
         data.insert(
+            "not".to_string(),
+            LoomExp::Func(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(x) = args.first() else {
+                        return Err(LoomErr::Reason(format!("Not enough arguments to = !")));
+                    };
+                    if args.len() > 1 {
+                        return Err(LoomErr::Reason(format!("Too many arguments to = !")));
+                    }
+                    match x {
+                        LoomExp::Nil => Ok(LoomExp::True),
+                        _ => Ok(LoomExp::Nil)
+                    }
+                }
+            )
+        );
+
+        data.insert(
             "if".to_string(),
             LoomExp::Macro(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
