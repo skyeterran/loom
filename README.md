@@ -31,6 +31,14 @@ Get Rust. Run `cargo run --example repl` from its directory. Have fun!
     (#mild "It's room-temperature, I guess?")
     (#cold "It's freezing in here!")
 ```
+### env
+`env` will debug the entire running Loom environment.
+### list
+`list` will create a list of values from its arguments. Square brackets are valid shorthand:
+```
+(list 1 2 3 4)
+[1 2 3 4]
+```
 
 ### object
 `object` will create combine data into a group of key-value pairs.
