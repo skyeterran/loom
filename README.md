@@ -1,90 +1,60 @@
 # 🧶 Loom: A narrative system for {your_game}
-Loom is a scripting language that makes writing interactive dialogue fun! It's based on Lisp and powered by Rust, which makes it simple to use and scalable in terms of both performance and narrative complexity.
+Loom is a thing!
 
-## Features
-### Writeable syntax
-Loom is written like instant-message roleplaying and requires very little boilerplate, for example:
+## How 2 write it
+### let
+`let` defines a global variable.
 ```
-Loom: This is an example of dialogue!
-Player: Seems pretty intuitive.
+(let message "Hello, world!")
 ```
-
-### Inline expressions and string formatting
-Write inline expressions `(like this)` for dynamic behavior. String formatting is as simple as using `{curly_braces}` in dialogue!
-
-### Variables
-Variables can be read from and written to in dialogue:
+### print
+`print` will show the value (in Loom code) on-screen.
 ```
-Loom: What's your name?
-(let player_name input)
-Loom: Nice to meet you, {player_name}!
+(print message)
 ```
-
-### Pattern matching
-Simple branching dialogue can be easily written with `if` expressions:
+### if
+`if` will return one thing if the first argument isn't nil, and optionally return another thing if it is nil.
 ```
-(if cool (
-    Loom: This is radical!
-)(
-    Loom: Aw, this sucks.
-))
-```
-...or with the `match` expression, which can represent more flexible states:
-```
-(match temperature (
-    ("hot" (
-        Loom: It's boiling in here!
-    ))
-    ("cold" (
-        Loom: It's freezing!
-    ))
-    ("mild" (
-        Loom: Ahh, perfect room temp.
-    ))
-))
+(if (= temperature #hot)
+    (let sweating true)
+    (let sweating false))
 ```
 
-### Choices
-Adding a player choice is as simple as calling the `choice` function in an expression:
+### match
+`match` will compare the first argument with the heads of the following pairs, and return the tail of the first matching one.
 ```
-Loom: Are you liking this style of writing so far?
-(choice
-    ("I love it!" (
-        Loom: That's great to hear!
-    ))
-    ("Not really." (
-        Loom: Aw, I'm heartbroken.
-        (end)
-    ))
-)
+(match temperature
+    (#hot "It's boiling in here!")
+    (#mild "It's room-temperature, I guess?")
+    (#cold "It's freezing in here!")
 ```
 
-### Randomization
-Branch dialogue randomly in a uniform way with the `random` expression:
+### object
+`object` will create combine data into a group of key-value pairs.
 ```
-(random (
-    (
-        Loom: Option A!
-    )
-    (
-        Loom: Option B?
-    )
-    (
-        Loom: Option C...
-    )
-))
+(let kitty (object
+    (species #cat)
+    (name "Caesar")
+    (stats (object
+        (str 17)
+        (dex 19)
+        (int 4)))))
 ```
-...or, control the likelihood of each option with the `weighted` expression:
+
+### get
+`get` can retrieve values from deeply nested objects. In this case, we can get the cat's `int` value out of two nested objects:
 ```
-(weighted (
-    (1.0 (
-        Loom: This is kinda likely.
-    ))
-    (3.0 (
-        Loom: This is rather likely.
-    ))
-    (0.1 (
-        Loom: This is very unlikely.
-    ))
-))
+(get kitty stats int)
+```
+
+### write
+`write` will export a value to Loom code in a file.
+```
+(write "fruits.loom" [#apple #orange #banana #melon])
+```
+
+### load
+`load` will load a value from Loom code in a file.
+```
+(load "fruits.loom")
 ```
