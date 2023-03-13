@@ -11,10 +11,10 @@ pub enum LoomExp {
     Nil,
     Error,
     Symbol(String),
-    Name(String),
+    Keyword(String),
     Number(f64),
     FString(String),
-    Object(HashMap<String, LoomExp>),
+    Table(HashMap<String, LoomExp>),
     List(Vec<LoomExp>),
     Func(fn(&[LoomExp], &mut LoomEnv) -> Result<LoomExp, LoomErr>),
     Macro(fn(&[LoomExp], &mut LoomEnv) -> Result<LoomExp, LoomErr>),
@@ -36,7 +36,7 @@ impl LoomExp {
                     }
                 }
             },
-            LoomExp::Name(_) => { Ok(self.clone()) },
+            LoomExp::Keyword(_) => { Ok(self.clone()) },
             LoomExp::Number(_) => { Ok(self.clone()) },
             LoomExp::FString(_) => { Ok(self.clone()) },
             LoomExp::List(list) => {
@@ -62,7 +62,7 @@ impl LoomExp {
                     }
                 }
             },
-            LoomExp::Object(_) => { Ok(self.clone()) },
+            LoomExp::Table(_) => { Ok(self.clone()) },
             LoomExp::Func(_) => { Err(LoomErr::Reason("Unexpected form".to_string())) },
             LoomExp::Macro(_) => { Err(LoomErr::Reason("Unexpected form".to_string())) },
         }
@@ -76,7 +76,7 @@ impl fmt::Display for LoomExp {
             LoomExp::Nil => { format!("nil") },
             LoomExp::Error => { format!("error") },
             LoomExp::Symbol(s) => s.clone(),
-            LoomExp::Name(n) => format!("#{n}"),
+            LoomExp::Keyword(k) => format!("#{k}"),
             LoomExp::Number(n) => n.to_string(),
             LoomExp::FString(fs) => format!("\"{fs}\""),
             LoomExp::List(list) => {
@@ -85,26 +85,20 @@ impl fmt::Display for LoomExp {
                                           .collect();
                 format!("[{}]", xs.join(" "))
             },
-            LoomExp::Object(map) => {
-                let mut obj = "(object".to_string();
+            LoomExp::Table(map) => {
+                let mut t = "{".to_string();
                 for (i, (key, value)) in map.iter().enumerate() {
                     let mut value_text = format!("{value}");
                     match value {
-                        LoomExp::Object(_) => {
+                        LoomExp::Table(_) => {
                             value_text = value_text.replace("\n", "\n    ");
                         },
                         _ => {}
                     }
-                    /*if i == 0 {
-                        obj = format!("{obj} ({key} {value_text})");
-                    } else {
-                        let indent = " ".repeat(4);
-                        obj = format!("{obj}\n{indent}({key} {value_text})");
-                    }*/
                     let indent = " ".repeat(4);
-                    obj = format!("{obj}\n{indent}({key} {value_text})");
+                    t = format!("{t}\n{indent}#{key} {value_text}");
                 }
-                format!("{obj}\n)")
+                format!("{t}\n}}")
             },
             LoomExp::Func(_) => "Function {}".to_string(),
             LoomExp::Macro(_) => "Macro {}".to_string(),
@@ -121,7 +115,7 @@ impl fmt::Debug for LoomExp {
             LoomExp::Nil => { write!(f, "Nil") },
             LoomExp::Error => { write!(f, "Error") },
             LoomExp::Symbol(s) => { write!(f, "Symbol({s})") },
-            LoomExp::Name(n) => { write!(f, "Name({n})") },
+            LoomExp::Keyword(n) => { write!(f, "Keyword({n})") },
             LoomExp::Number(n) => { write!(f, "Number({n})") },
             LoomExp::FString(fs) => { write!(f, "FString(\"{}\")", fs) },
             LoomExp::List(list) => {
@@ -131,7 +125,7 @@ impl fmt::Debug for LoomExp {
                 }
                 write!(f, "List({})", lines.join(", "))
             },
-            LoomExp::Object(obj) => { write!(f, "Object({:#?})", obj) },
+            LoomExp::Table(t) => { write!(f, "Table({:#?})", t) },
             LoomExp::Func(_) => { write!(f, "Function call") },
             LoomExp::Macro(_) => { write!(f, "Macro call") },
         }
@@ -159,9 +153,9 @@ impl PartialEq for LoomExp {
                     _ => { false }
                 }
             },
-            LoomExp::Name(n) => {
+            LoomExp::Keyword(k) => {
                 match other {
-                    LoomExp::Name(o_n) => { n == o_n },
+                    LoomExp::Keyword(o_k) => { k == o_k },
                     _ => { false }
                 }
             },
@@ -187,9 +181,9 @@ impl PartialEq for LoomExp {
                     _ => { false }
                 }
             },
-            LoomExp::Object(obj) => {
+            LoomExp::Table(obj) => {
                 match other {
-                    LoomExp::Object(o_obj) => { obj == o_obj },
+                    LoomExp::Table(o_obj) => { obj == o_obj },
                     _ => { false }
                 }
             }
@@ -291,44 +285,58 @@ impl Default for LoomEnv {
             
         data.insert(
             // (load "test.loom")
-            // TODO: Make this load into an object instead of running it
+            // (load "x.loom" x)
             "load".to_string(),
-            LoomExp::Func(
+            LoomExp::Macro(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
-                    let Some(LoomExp::FString(filename)) = args.first() else {
+                    let Some(first) = args.first() else {
+                        return Err(LoomErr::Reason(format!("Not enough arguments!")));
+                    };
+                    let LoomExp::FString(filename) = first.eval(env)? else {
                         return Err(LoomErr::Reason(format!("Expected a filename!")));
                     };
-                    let source = std::fs::read_to_string(filename).expect(format!("Couldn't load {filename}").as_str());
+                    let source = std::fs::read_to_string(filename.clone()).expect(format!("Couldn't load {filename}").as_str());
                     let tokens = crate::parser::tokenize(source).unwrap();
                     let exp = tokens_to_exp(tokens, false).unwrap();
-                    exp.eval(env)
+
+                    match exp.eval(env) {
+                        Ok(data) => {
+                            // If a symbol is given as the second argument, save that data into that symbol
+                            if let Some(LoomExp::Symbol(k)) = args.get(1) {
+                                env.data.insert(k.clone(), data.clone());
+                            }
+                            Ok(data)
+                        },
+                        Err(e) => {
+                            Err(e)
+                        }
+                    }
                 }
             )
         );
 
         data.insert(
-            // (write x "x.loom")
-            // TODO: Make this load into an object instead of running it
-            "write".to_string(),
+            // (save x "x.loom")
+            "save".to_string(),
             LoomExp::Func(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
-                    let Some(LoomExp::FString(filename)) = args.first() else {
+                    let Some(input) = args.first() else {
+                        return Err(LoomErr::Reason(format!("Expected input data!")));
+                    };
+                    let Some(LoomExp::FString(filename)) = args.get(1) else {
                         return Err(LoomErr::Reason(format!("Expected a filename!")));
                     };
-                    let mut data: Vec<String> = Vec::new();
-                    for exp in args[1..args.len()].iter() {
-                        data.push(format!("{exp}"));
-                    }
+                    let data = format!("{input}");
                     let path = Path::new(filename);
                     std::fs::create_dir_all(path.parent().to_owned().expect("Couldn't get parent path!")).expect("Couldn't create parent path!");
-                    std::fs::write(filename, data.join("\n")).expect("Unable to write file!");
+                    std::fs::write(filename, data).expect("Unable to write to disk!");
                     Ok(LoomExp::Nil)
                 }
             )
         );
 
         data.insert(
-            "let".to_string(),
+            "set".to_string(),
             LoomExp::Macro(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
                     let Some(LoomExp::Symbol(k)) = args.first() else {
@@ -438,25 +446,32 @@ impl Default for LoomEnv {
         );
         
         data.insert(
-            "object".to_string(),
+            "table".to_string(),
             LoomExp::Macro(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
                     let mut hashmap: HashMap<String, LoomExp> = HashMap::new();
-                    for arg in args {
-                        match arg {
-                            LoomExp::List(l) => {
-                                let Some(LoomExp::Symbol(key)) = l.first() else {
-                                    return Err(LoomErr::Reason(format!("Incorrect type for object variable key")));
-                                };
-                                let Some(value) = l.get(1) else {
-                                    return Err(LoomErr::Reason(format!("Missing value argument for object!")));
-                                };
-                                hashmap.insert(key.clone(), value.eval(env)?);
-                            },
-                            _ => { return Err(LoomErr::Reason(format!("object arguments must be lists of key-value pairs"))); }
+                    if args.len() % 2 != 0 {
+                        return Err(LoomErr::Reason(format!("Key-value pairs should add up to an even count!")));
+                    }
+                    let mut keyvals: Vec<(String, LoomExp)> = Vec::new();
+                    let mut current_kv: (String, LoomExp) = (String::new(), LoomExp::Nil);
+                    for i in 0..(args.len()) {
+                        if i % 2 == 0 {
+                            // This is a key
+                            let Some(LoomExp::Keyword(key)) = args.get(i) else {
+                                return Err(LoomErr::Reason(format!("Invalid keyword!")));
+                            };
+                            current_kv.0 = key.clone();
+                        } else {
+                            // This is a value
+                            current_kv.1 = args.get(i).expect("Invalid value!").eval(env)?;
+                            keyvals.push(current_kv.clone());
                         }
                     }
-                    Ok(LoomExp::Object(hashmap))
+                    for (k, v) in keyvals {
+                        hashmap.insert(k, v);
+                    }
+                    Ok(LoomExp::Table(hashmap))
                 }
             )
         );
@@ -469,7 +484,7 @@ impl Default for LoomEnv {
                     let Some(obj_sym) = args.first() else {
                         return Err(LoomErr::Reason(format!("First argument to get is missing")));
                     };
-                    let LoomExp::Object(obj) = obj_sym.eval(env)? else {
+                    let LoomExp::Table(obj) = obj_sym.eval(env)? else {
                         return Err(LoomErr::Reason(format!("First argument to get is not an object!")));
                     };
                     let Some(LoomExp::Symbol(key)) = args.get(1) else {
@@ -480,7 +495,7 @@ impl Default for LoomEnv {
                         let LoomExp::Symbol(key) = name else {
                             return Err(LoomErr::Reason(format!("Bad argument!")));
                         };
-                        let Some(LoomExp::Object(map)) = value else {
+                        let Some(LoomExp::Table(map)) = value else {
                             return Err(LoomErr::Reason(format!("Bad thing!")));
                         };
                         value = map.get(key).clone();

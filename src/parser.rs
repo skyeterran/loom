@@ -23,7 +23,7 @@ pub enum Token {
     RParen,
     Number(f64),
     Symbol(String),
-    Name(String),
+    Keyword(String),
     StringToken(String),
 }
 
@@ -44,10 +44,12 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
                     in_string = true;
                     words.push_str(" \" ");
                 },
-                '{' => { words.push_str(" ( quote ") },
+                '{' => { words.push_str(" ( table ") },
                 '}' => { words.push_str(" ) ") },
                 '[' => { words.push_str(" ( list ") },
                 ']' => { words.push_str(" ) ") },
+                '<' => { words.push_str(" ( quote ") },
+                '>' => { words.push_str(" ) ") },
                 _ => { words.push(char) }
             }
         } else {
@@ -86,7 +88,7 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
                             },
                             Err(_) => {
                                 if word.chars().next() == Some('#') {
-                                    tokens.push(Name(word[1..word.len()].to_string()));
+                                    tokens.push(Keyword(word[1..word.len()].to_string()));
                                 } else {
                                     tokens.push(Symbol(word.to_string()));
                                 }
@@ -120,7 +122,7 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
     Ok(tokens)
 }
 
-// Creates an object from a stream of tokens
+// Creates an table from a stream of tokens
 pub fn tokens_to_exp(tokens: Vec<Token>, is_list: bool) -> Result<LoomExp, ParseError> {
     use ParseError::*;
     use Token::*;
@@ -136,7 +138,7 @@ pub fn tokens_to_exp(tokens: Vec<Token>, is_list: bool) -> Result<LoomExp, Parse
             // Token parsing
             match token {
                 LParen => {
-                    // Create an object from this sub-expression
+                    // Create an table from this sub-expression
                     consume_substream = true;
                     nesting += 1;
                 },
@@ -154,8 +156,8 @@ pub fn tokens_to_exp(tokens: Vec<Token>, is_list: bool) -> Result<LoomExp, Parse
                         list.push(LoomExp::Symbol(s));
                     }
                 },
-                Name(n) => {
-                    list.push(LoomExp::Name(n));
+                Keyword(n) => {
+                    list.push(LoomExp::Keyword(n));
                 },
                 Number(n) => {
                     list.push(LoomExp::Number(n));

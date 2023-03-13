@@ -5,10 +5,10 @@ Loom weaves itself! I will write a more helpful page later!
 Get Rust. Run `cargo run --example repl` from its directory. Have fun!
 
 ## How 2 write
-### let
-`let` defines a global variable.
+### set
+`set` defines a global variable.
 ```
-(let message "Hello, world!")
+(set message "Hello, world!")
 ```
 ### print
 `print` will show the value (in Loom code) on-screen.
@@ -19,8 +19,8 @@ Get Rust. Run `cargo run --example repl` from its directory. Have fun!
 `if` will return one thing if the first argument isn't nil, and optionally return another thing if it is nil.
 ```
 (if (= temperature #hot)
-    (let sweating true)
-    (let sweating nil))
+    (set sweating true)
+    (set sweating nil))
 ```
 
 ### match
@@ -40,35 +40,48 @@ Get Rust. Run `cargo run --example repl` from its directory. Have fun!
 [1 2 3 4]
 ```
 
-### object
-`object` will combine data into a group of key-value pairs.
+### table
+`table` will combine data into a group of key-value pairs. Curly braces are valid shorthand:
 ```
-(let kitty (object
-    (species #cat)
-    (name "Caesar")
-    (stats (object
-        (str 17)
-        (dex 19)
-        (int 4)))))
+(set kitty (table
+    #species #cat
+    #name "Caesar"
+    #stats (table
+        #str 17
+        #dex 19
+        #int 4
+    ))
+))
+(set kitty {
+    #species #cat
+    #name "Caesar"
+    #stats {
+        #str 17
+        #dex 19
+        #int 4
+    })
+})
 ```
 
 ### get
-`get` can retrieve values from deeply nested objects. Dot-separated keys are valid shorthand. In this case, we can get the cat's `int` value out of two nested objects:
+`get` can retrieve values from deeply nested tables. Dot-separated keys are valid shorthand. In this case, we can get the cat's `int` value out of two nested tables:
 ```
 (get kitty stats int)
 kitty.stats.int
 ```
 
-### write
-`write` will export a value to Loom code in a file.
+### save
+`save` will export a value to Loom code in a file.
 ```
-(write "fruits.loom" [#apple #orange #banana #melon])
+(set fruits [#apple #orange #banana #melon])
+(save fruits "fruits.loom")
 ```
 
 ### load
-`load` will load a value from Loom code in a file.
+`load` will load a value from Loom code in a file. If you give it a symbol as the second argument, it will set the symbol to the loaded value:
 ```
 (load "fruits.loom")
+(load "fruits.loom" fruits)
 ```
 
 ### run

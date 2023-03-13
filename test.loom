@@ -1,28 +1,33 @@
-(let cat #sock)
+(set cat #sock)
 
-(let trait (match cat
+(set trait (match cat
     (#sock #cute)
     (#salad #smart)))
 
 (match trait
-    (#cute (let msg "That's a cute kitty!"))
-    (#smart (let msg "Woah, that's a lawyer.")))
+    (#cute (set msg "That's a cute kitty!"))
+    (#smart (set msg "Woah, that's a lawyer.")))
 
-(let user (object
-    (species #dog)
-    (name "Skye")
-    (age 26)
-    (weights [0 4 1 5])
-    (stats (object (dex 4)
-        (int 14)
-        (str 8)))))
+(set user {
+    #species #dog
+    #name "Skye"
+    #age 26
+    #weights [0 4 1 5]
+    #stats {
+        #dex 4
+        #int 14
+        #str 8
+    }
+})
 
-(let cat (object
-    (species #cat)
-    (name "Salad")
-    (age 6)
-    (weights [0 2 3 1])
-    (stats (object
-        (dex 18)
-        (int 9)
-        (str 2)))))
+(set cat {
+    #species #cat
+    #name "Salad"
+    #age 6
+    #weights [0 2 3 1]
+    #stats {
+        #dex 18
+        #int 9
+        #str 2
+    }
+})
