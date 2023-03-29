@@ -44,7 +44,7 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
                     in_string = true;
                     words.push_str(" \" ");
                 },
-                '{' => { words.push_str(" ( table ") },
+                '{' => { words.push_str(" ( env ") },
                 '}' => { words.push_str(" ) ") },
                 '[' => { words.push_str(" ( list ") },
                 ']' => { words.push_str(" ) ") },
@@ -122,7 +122,7 @@ pub fn tokenize(source: String) -> Result<Vec<Token>, ParseError> {
     Ok(tokens)
 }
 
-// Creates an table from a stream of tokens
+// Creates an env from a stream of tokens
 pub fn tokens_to_exp(tokens: Vec<Token>, is_list: bool) -> Result<LoomExp, ParseError> {
     use ParseError::*;
     use Token::*;
@@ -138,7 +138,7 @@ pub fn tokens_to_exp(tokens: Vec<Token>, is_list: bool) -> Result<LoomExp, Parse
             // Token parsing
             match token {
                 LParen => {
-                    // Create an table from this sub-expression
+                    // Create an env from this sub-expression
                     consume_substream = true;
                     nesting += 1;
                 },

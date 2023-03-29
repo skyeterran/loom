@@ -14,7 +14,7 @@ pub enum LoomExp {
     Keyword(String),
     Number(f64),
     FString(String),
-    Table(HashMap<String, LoomExp>),
+    Env(LoomEnv),
     List(Vec<LoomExp>),
     Func(fn(&[LoomExp], &mut LoomEnv) -> Result<LoomExp, LoomErr>),
     Macro(fn(&[LoomExp], &mut LoomEnv) -> Result<LoomExp, LoomErr>),
@@ -32,7 +32,7 @@ impl LoomExp {
                         Ok(v.clone())
                     },
                     None => {
-                        Err(LoomErr::Reason(format!("Unexpected symbol: {k}")))
+                        Err(LoomErr::UnknownSymbol)
                     }
                 }
             },
@@ -62,7 +62,7 @@ impl LoomExp {
                     }
                 }
             },
-            LoomExp::Table(_) => { Ok(self.clone()) },
+            LoomExp::Env(_) => { Ok(self.clone()) },
             LoomExp::Func(_) => { Err(LoomErr::Reason("Unexpected form".to_string())) },
             LoomExp::Macro(_) => { Err(LoomErr::Reason("Unexpected form".to_string())) },
         }
@@ -85,12 +85,12 @@ impl fmt::Display for LoomExp {
                                           .collect();
                 format!("[{}]", xs.join(" "))
             },
-            LoomExp::Table(map) => {
+            LoomExp::Env(map) => {
                 let mut t = "{".to_string();
-                for (i, (key, value)) in map.iter().enumerate() {
+                for (i, (key, value)) in map.data.iter().enumerate() {
                     let mut value_text = format!("{value}");
                     match value {
-                        LoomExp::Table(_) => {
+                        LoomExp::Env(_) => {
                             value_text = value_text.replace("\n", "\n    ");
                         },
                         _ => {}
@@ -125,7 +125,7 @@ impl fmt::Debug for LoomExp {
                 }
                 write!(f, "List({})", lines.join(", "))
             },
-            LoomExp::Table(t) => { write!(f, "Table({:#?})", t) },
+            LoomExp::Env(t) => { write!(f, "Env({:#?})", t) },
             LoomExp::Func(_) => { write!(f, "Function call") },
             LoomExp::Macro(_) => { write!(f, "Macro call") },
         }
@@ -181,9 +181,9 @@ impl PartialEq for LoomExp {
                     _ => { false }
                 }
             },
-            LoomExp::Table(obj) => {
+            LoomExp::Env(obj) => {
                 match other {
-                    LoomExp::Table(o_obj) => { obj == o_obj },
+                    LoomExp::Env(o_obj) => { obj.data == o_obj.data },
                     _ => { false }
                 }
             }
@@ -195,6 +195,7 @@ impl PartialEq for LoomExp {
 #[derive(Debug)]
 pub enum LoomErr {
     Reason(String),
+    UnknownSymbol,
 }
 
 #[derive(Debug, Clone)]
@@ -246,7 +247,7 @@ impl Default for LoomEnv {
         );
 
         data.insert(
-            "env".to_string(),
+            "debug-env".to_string(),
             LoomExp::Func(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
                     println!("{:#?}", env);
@@ -446,7 +447,7 @@ impl Default for LoomEnv {
         );
         
         data.insert(
-            "table".to_string(),
+            "env".to_string(),
             LoomExp::Macro(
                 |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
                     let mut hashmap: HashMap<String, LoomExp> = HashMap::new();
@@ -471,7 +472,7 @@ impl Default for LoomEnv {
                     for (k, v) in keyvals {
                         hashmap.insert(k, v);
                     }
-                    Ok(LoomExp::Table(hashmap))
+                    Ok(LoomExp::Env(LoomEnv { data: hashmap }))
                 }
             )
         );
@@ -484,26 +485,54 @@ impl Default for LoomEnv {
                     let Some(obj_sym) = args.first() else {
                         return Err(LoomErr::Reason(format!("First argument to get is missing")));
                     };
-                    let LoomExp::Table(obj) = obj_sym.eval(env)? else {
+                    let LoomExp::Env(obj) = obj_sym.eval(env)? else {
                         return Err(LoomErr::Reason(format!("First argument to get is not an object!")));
                     };
                     let Some(LoomExp::Symbol(key)) = args.get(1) else {
                         return Err(LoomErr::Reason(format!("Second argument to get must be a name")));
                     };
-                    let mut value: Option<&LoomExp> = obj.get(key).clone();
+                    let mut value: Option<&LoomExp> = obj.data.get(key).clone();
                     for name in args[2..args.len()].iter() {
                         let LoomExp::Symbol(key) = name else {
                             return Err(LoomErr::Reason(format!("Bad argument!")));
                         };
-                        let Some(LoomExp::Table(map)) = value else {
+                        let Some(LoomExp::Env(map)) = value else {
                             return Err(LoomErr::Reason(format!("Bad thing!")));
                         };
-                        value = map.get(key).clone();
+                        value = map.data.get(key).clone();
                     }
                     match value {
                         Some(contents) => Ok(contents.clone()),
                         None => Ok(LoomExp::Nil)
                     }
+                }
+            )
+        );
+
+        data.insert(
+            "in".to_string(),
+            LoomExp::Macro(
+                |args: &[LoomExp], env: &mut LoomEnv| -> Result<LoomExp, LoomErr> {
+                    let Some(first) = args.first() else {
+                        return Err(LoomErr::Reason(format!("in needs arguments!")));
+                    };
+
+                    let Ok(LoomExp::Env(e)) = first.eval(env) else {
+                        return Err(LoomErr::Reason(format!("Need an environment!")));
+                    };
+
+                    let mut last = LoomExp::Nil;
+                    for exp in args[1..args.len()].iter() {
+                        last = match exp.eval(&mut e.clone()) {
+                            Ok(v) => v,
+                            Err(e) => match e {
+                                LoomErr::Reason(r) => LoomExp::Nil,
+                                LoomErr::UnknownSymbol => exp.eval(env)?
+                            }
+                        };
+                    }
+
+                    Ok(last)
                 }
             )
         );
