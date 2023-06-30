@@ -85,8 +85,11 @@ pub enum Exp {
         contents: Vec<Exp>,
     },
     Symbol {
-        contents: Token,
+        contents: String,
     },
+    Literal {
+        contents: String,
+    }
 }
 
 impl Exp {
@@ -132,6 +135,9 @@ impl fmt::Display for Exp {
                 write!(f, "[{inner}]")
             }
             Exp::Symbol { contents } => {
+                write!(f, "{contents}")
+            }
+            Exp::Literal { contents } => {
                 write!(f, "{contents}")
             }
         }
@@ -349,7 +355,7 @@ pub fn read_expressions(source: String) -> Result<Vec<Exp>, Box<dyn Error>> {
             }
             _ => {
                 if nesting == 0 {
-                    expressions.push(process_token(t));
+                    expressions.push(process_atom(t));
                 }
             }
         }
@@ -359,16 +365,19 @@ pub fn read_expressions(source: String) -> Result<Vec<Exp>, Box<dyn Error>> {
     Ok(expressions)
 }
 
-pub fn process_token(token: &Token) -> Exp {
+pub fn process_atom(token: &Token) -> Exp {
     match token {
         Token::Symbol { content, .. }=> {
             if content == "nil" {
                 Exp::Nil
             } else {
-                Exp::Symbol { contents: token.clone() }
+                Exp::Symbol { contents: content.clone() }
             }
         }
-        _ => Exp::Symbol { contents: token.clone() }
+        Token::StrLit { content, .. } => {
+            Exp::Literal { contents: content.clone() }
+        }
+        _ => todo!() // Shouldn't have been called
     }
 }
 
@@ -439,7 +448,7 @@ pub fn parse_expression(
             }
             Token::Symbol {..} | Token::StrLit {..} => {
                 if nested {
-                    contents.push(process_token(t));
+                    contents.push(process_atom(t));
                 } else {
                     if end - start > 1 {
                         // Multiple atoms outside of a list (syntax error)
@@ -449,7 +458,7 @@ pub fn parse_expression(
                         ));
                     } else {
                         // Single atom
-                        return Ok(process_token(t));
+                        return Ok(process_atom(t));
                     }
                 }
             }
