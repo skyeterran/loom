@@ -3,4 +3,5 @@
 members = [
     "loom_reader",
     "loom_runtime",
+    "loom_compiler",
 ]

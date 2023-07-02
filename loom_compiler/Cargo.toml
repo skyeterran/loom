@@ -1,0 +1,13 @@
+[package]
+name = "loom_compiler"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+loom_reader = { path = "../loom_reader" }
+cranelift = "0.93.0"
+cranelift-module = "0.93.0"
+cranelift-jit = "0.93.0"
+cranelift-native = "0.93.0"
