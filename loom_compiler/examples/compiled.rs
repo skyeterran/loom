@@ -1,5 +1,5 @@
 use core::mem;
-use cranelift_jit_demo::jit;
+use loom_compiler::jit;
 
 fn main() -> Result<(), String> {
     // Create the JIT instance, which manages all generated functions and data.
