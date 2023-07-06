@@ -89,7 +89,7 @@ pub enum Exp {
     },
     Literal {
         contents: String,
-    }
+    },
 }
 
 impl Exp {

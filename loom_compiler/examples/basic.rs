@@ -7,6 +7,13 @@ use loom_compiler::frontend::Expr;
 
 const test_code: &str = r#"
     (set i 0)
+    (set b 2)
+    (if (= i 0)
+        (do
+            (set b 9)
+            (set b 3)
+        )
+    )
     (while (> i 10)
         (set i (+ i 1))
     )

@@ -92,7 +92,7 @@ impl JIT {
                                   .collect();
 
         println!("name: {name}, params: {params:?}, the_return: {the_return}");
-        println!("    stmts: {stmts:#?}\n");
+        //println!("    stmts: {stmts:#?}\n");
 
         // Then, translate the AST nodes into Cranelift IR.
         self.translate(params, the_return, stmts)?;
@@ -274,7 +274,13 @@ impl<'a> FunctionTranslator<'a> {
             Expr::GlobalDataAddr(name) => self.translate_global_data_addr(name),
             Expr::Identifier(name) => {
                 // `use_var` is used to read the value of a variable.
-                let variable = self.variables.get(&name).expect("variable not defined");
+                let variable = match self.variables.get(&name) {
+                    Some(v) => v,
+                    None => {
+                        println!("Variable \'{name}\' is not defined");
+                        todo!()
+                    }
+                };
                 self.builder.use_var(*variable)
             }
             Expr::Assign(name, expr) => self.translate_assign(name, *expr),
@@ -284,6 +290,8 @@ impl<'a> FunctionTranslator<'a> {
             Expr::WhileLoop(condition, loop_body) => {
                 self.translate_while_loop(*condition, loop_body)
             }
+
+            _ => { todo!() }
         }
     }
 
@@ -292,7 +300,13 @@ impl<'a> FunctionTranslator<'a> {
         // variables can have multiple definitions. Cranelift will
         // convert them into SSA form for itself automatically.
         let new_value = self.translate_expr(expr);
-        let variable = self.variables.get(&name).unwrap();
+        let variable = match self.variables.get(&name) {
+            Some(v) => v,
+            None => {
+                println!("Undefined variable: {name:?}");
+                todo!();
+            }
+        };
         self.builder.def_var(*variable, new_value);
         new_value
     }

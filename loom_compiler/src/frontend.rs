@@ -20,6 +20,7 @@ pub enum Expr {
     WhileLoop(Box<Expr>, Vec<Expr>),
     Call(String, Vec<Expr>),
     GlobalDataAddr(String),
+    Sequence(Vec<Expr>),
 }
 
 impl Expr {
@@ -29,7 +30,14 @@ impl Expr {
                 match contents.parse::<i32>() {
                     Ok(n) => Expr::Literal(format!("{n}")),
                     Err(_) => {
-                        Expr::Identifier(contents.clone())
+                        if contents.starts_with("&") {
+                            Expr::GlobalDataAddr(contents.clone()
+                                                         .strip_prefix("&")
+                                                         .unwrap()
+                                                         .to_string())
+                        } else {
+                            Expr::Identifier(contents.clone())
+                        }
                     }
                 }
             }
@@ -59,16 +67,26 @@ impl Expr {
                     ">" => Expr::Gt(args[0].clone(), args[1].clone()),
                     ">=" => Expr::Ge(args[0].clone(), args[1].clone()),
                     "if" => {
+                        let truthy = *args[1].clone();
+                        let truthy = match truthy {
+                            Expr::Sequence(contents) => contents,
+                            _ => vec![truthy]
+                        };
                         if args.len() > 2 {
+                            let falsy = *args[2].clone();
+                            let falsy = match falsy {
+                                Expr::Sequence(contents) => contents,
+                                _ => vec![falsy]
+                            };
                             Expr::IfElse(
                                 args[0].clone(),
-                                vec![*args[1].clone()],
-                                vec![*args[2].clone()]
+                                truthy,
+                                falsy
                             )
                         } else {
                             Expr::IfElse(
                                 args[0].clone(),
-                                vec![*args[1].clone()],
+                                truthy,
                                 vec![]
                             )
                         }
@@ -91,6 +109,13 @@ impl Expr {
                         }
                         Expr::WhileLoop(args[0].clone(), body)
                     },
+                    "do" => {
+                        let mut body: Vec<Expr> = Vec::new();
+                        for a in &args {
+                            body.push(*a.clone());
+                        }
+                        Expr::Sequence(body)
+                    }
                     _ => {
                         let mut body: Vec<Expr> = Vec::new();
                         for a in &args {

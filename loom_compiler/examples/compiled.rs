@@ -65,7 +65,7 @@ const FOO_CODE: &str = r#"
             (if b 30 40)
             50
         ))
-        (set result (+ result 2))
+        (set result (+ result 9))
     )
 "#;
 
