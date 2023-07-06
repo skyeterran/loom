@@ -4,7 +4,9 @@ use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
 use std::collections::HashMap;
 use std::slice;
-use loom_reader::parse::Exp;
+use loom_reader::parse::{
+    Exp, read_expressions
+};
 
 /// The basic JIT class.
 pub struct JIT {
@@ -51,7 +53,10 @@ impl Default for JIT {
 impl JIT {
     /// Compile a string in the toy language into machine code.
     pub fn compile(&mut self, input: &str) -> Result<*const u8, String> {
-        let source = Exp::Nil;
+        let source = read_expressions(input.to_string()).unwrap()
+                                                        .get(0)
+                                                        .unwrap()
+                                                        .clone();
 
         let Exp::SExp { car, cdr } = source else { todo!() };
 
@@ -78,9 +83,13 @@ impl JIT {
             _ => todo!()
         };
 
-        let the_return: String = format!("out");
+        // For now, just hardcode the return var as "result"
+        let the_return: String = format!("result");
 
-        let stmts = Vec::<Expr>::new();
+        let stmts: Vec<Expr> = cdr.clone().split_off(3)
+                                  .iter()
+                                  .map(|x| Expr::from_exp(x))
+                                  .collect();
 
         println!("name: {name}, params: {params:?}, the_return: {the_return}");
         println!("    stmts: {stmts:#?}\n");

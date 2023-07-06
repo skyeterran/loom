@@ -1,4 +1,4 @@
-(fn foo [a b]
+(fn foo [a b] []
     (set c (if a
         (if b 30 40)
         50
@@ -6,7 +6,7 @@
     (+ c 2)
 )
 
-(fn recursive_fib [n]
+(fn recursive_fib [n] []
     (if (= n 0)
         0
         (if (= n 1)
@@ -19,7 +19,7 @@
     )
 )
 
-(fn iterative_fib [n]
+(fn iterative_fib [n] []
     (if (= n 0)
         0
         (do
@@ -37,6 +37,6 @@
     )
 )
 
-(fn hello []
+(fn hello [] []
     (puts &hello_string)
 )

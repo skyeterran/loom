@@ -5,13 +5,21 @@ use loom_reader::parse::{
 };
 use loom_compiler::frontend::Expr;
 
+const test_code: &str = r#"
+    (set i 0)
+    (while (> i 10)
+        (set i (+ i 1))
+    )
+"#;
+
 fn main() -> Result<(), Box<dyn Error>> {
-    let source = fs::read_to_string("test.loom")?;
+    //let source = fs::read_to_string("test.loom")?;
+    let source = test_code.to_string();
     let expressions = read_expressions(source)?;
 
     for x in expressions {
         println!("{x}");
-        println!("--> {:?}", Expr::from_exp(x));
+        println!("--> {:?}", Expr::from_exp(&x));
     }
 
     Ok(())

@@ -60,58 +60,55 @@ unsafe fn run_code<I, O>(jit: &mut jit::JIT, code: &str, input: I) -> Result<O, 
 // assignments, so the input is not in SSA form, but that's ok because
 // Cranelift handles all the details of translating into SSA form itself.
 const FOO_CODE: &str = r#"
-    fn foo(a, b) -> (c) {
-        c = if a {
-            if b {
-                30
-            } else {
-                40
-            }
-        } else {
+    (fn foo [a b] []
+        (set result (if a
+            (if b 30 40)
             50
-        }
-        c = c + 2
-    }
+        ))
+        (set result (+ result 2))
+    )
 "#;
 
 /// Another example: Recursive fibonacci.
 const RECURSIVE_FIB_CODE: &str = r#"
-    fn recursive_fib(n) -> (r) {
-        r = if n == 0 {
-                    0
-            } else {
-                if n == 1 {
-                    1
-                } else {
-                    recursive_fib(n - 1) + recursive_fib(n - 2)
-                }
-            }
-    }
+    (fn recursive_fib [n] []
+        (set result (if (= n 0)
+            0
+            (if (= n 1)
+                1
+                (+
+                    (recursive_fib (- n 1))
+                    (recursive_fib (- n 2))
+                )
+            )
+        ))
+    )
 "#;
 
 /// Another example: Iterative fibonacci.
 const ITERATIVE_FIB_CODE: &str = r#"
-    fn iterative_fib(n) -> (r) {
-        if n == 0 {
-            r = 0
-        } else {
-            n = n - 1
-            a = 0
-            r = 1
-            while n != 0 {
-                t = r
-                r = r + a
-                a = t
-                n = n - 1
-            }
-        }
-    }
+    (fn iterative_fib [n] []
+        (if (= n 0)
+            (set result 0)
+            (do
+                (set n (- n 1))
+                (set a 0)
+                (set result 1)
+                (while (!= n 0)
+                    (set t result)
+                    (set result (+ result a))
+                    (set a t)
+                    (set n (- n 1))
+                )
+            )
+        )
+    )
 "#;
 
 /// Let's say hello, by calling into libc. The puts function is resolved by
 /// dlsym to the libc function, and the string &hello_string is defined below.
 const HELLO_CODE: &str = r#"
-fn hello() -> (r) {
-    puts(&hello_string)
-}
+    (fn hello [] []
+        (puts &hello_string)
+    )
 "#;
