@@ -18,7 +18,7 @@ fn main() -> Result<(), String> {
 }
 
 fn run_foo(jit: &mut jit::JIT) -> Result<isize, String> {
-    unsafe { run_code(jit, FOO_CODE, (1, 0)) }
+    unsafe { run_code(jit, FOO_CODE, (42, 63)) }
 }
 
 fn run_recursive_fib_code(jit: &mut jit::JIT, input: isize) -> Result<isize, String> {
@@ -61,18 +61,15 @@ unsafe fn run_code<I, O>(jit: &mut jit::JIT, code: &str, input: I) -> Result<O, 
 // Cranelift handles all the details of translating into SSA form itself.
 const FOO_CODE: &str = r#"
     (fn foo [a b] []
-        (set result (if a
-            (if b 30 40)
-            50
-        ))
-        (set result (+ result 9))
+        (set sum (+ a b))
+        sum
     )
 "#;
 
 /// Another example: Recursive fibonacci.
 const RECURSIVE_FIB_CODE: &str = r#"
     (fn recursive_fib [n] []
-        (set result (if (= n 0)
+        (if (= n 0)
             0
             (if (= n 1)
                 1
@@ -81,7 +78,7 @@ const RECURSIVE_FIB_CODE: &str = r#"
                     (recursive_fib (- n 2))
                 )
             )
-        ))
+        )
     )
 "#;
 
@@ -89,7 +86,7 @@ const RECURSIVE_FIB_CODE: &str = r#"
 const ITERATIVE_FIB_CODE: &str = r#"
     (fn iterative_fib [n] []
         (if (= n 0)
-            (set result 0)
+            0
             (do
                 (set n (- n 1))
                 (set a 0)
@@ -100,6 +97,7 @@ const ITERATIVE_FIB_CODE: &str = r#"
                     (set a t)
                     (set n (- n 1))
                 )
+                result
             )
         )
     )

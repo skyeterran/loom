@@ -86,10 +86,16 @@ impl JIT {
         // For now, just hardcode the return var as "result"
         let the_return: String = format!("result");
 
-        let stmts: Vec<Expr> = cdr.clone().split_off(3)
+        let mut stmts: Vec<Expr> = cdr.clone().split_off(3)
                                   .iter()
                                   .map(|x| Expr::from_exp(x))
                                   .collect();
+
+        // Use the final statement in the body of a function as the result value
+        let last_stmt = stmts.pop();
+        if let Some(last) = last_stmt {
+            stmts.push(Expr::Assign(format!("result"), Box::new(last)));
+        }
 
         println!("name: {name}, params: {params:?}, the_return: {the_return}");
         //println!("    stmts: {stmts:#?}\n");
@@ -482,7 +488,8 @@ fn declare_variables_in_stmt(
     expr: &Expr,
 ) {
     match *expr {
-        Expr::Assign(ref name, _) => {
+        Expr::Assign(ref name, ref value) => {
+            declare_variables_in_stmt(int, builder, variables, index, value);
             declare_variable(int, builder, variables, index, name);
         }
         Expr::IfElse(ref _condition, ref then_body, ref else_body) => {
