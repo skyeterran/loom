@@ -14,6 +14,14 @@ fn main() -> Result<(), String> {
         run_iterative_fib_code(&mut jit, 10)?
     );
     run_hello(&mut jit)?;
+    println!(
+        "array test = {}",
+        run_array(&mut jit)?
+    );
+    /*println!(
+        "print int test = {}",
+        run_print_int(&mut jit)?
+    );*/
     Ok(())
 }
 
@@ -32,6 +40,14 @@ fn run_iterative_fib_code(jit: &mut jit::JIT, input: isize) -> Result<isize, Str
 fn run_hello(jit: &mut jit::JIT) -> Result<isize, String> {
     jit.create_data("hello_string", "hello world!\0".as_bytes().to_vec())?;
     unsafe { run_code(jit, HELLO_CODE, ()) }
+}
+
+fn run_array(jit: &mut jit::JIT) -> Result<isize, String> {
+    unsafe { run_code(jit, ARRAY_CODE, ()) }
+}
+
+fn run_print_int(jit: &mut jit::JIT) -> Result<isize, String> {
+    unsafe { run_code(jit, PRINT_INT_CODE, ()) }
 }
 
 /// Executes the given code using the cranelift JIT compiler.
@@ -100,6 +116,43 @@ const ITERATIVE_FIB_CODE: &str = r#"
                 result
             )
         )
+    )
+"#;
+
+const ARRAY_CODE: &str = r#"
+    (fn array_test [] []
+        (set a (array 8))
+        (array_set a 7 420)
+        (array_set a 3 69)
+        (+
+            (array_get a 7)
+            (array_get a 3)
+        )
+    )
+"#;
+
+const PRINT_INT_CODE: &str = r#"
+    (fn print_int [] []
+        (set n 9997)
+
+        ; Find out how many digits n is
+        (set log 0)
+        (while (>= n 10)
+            (set n (/ n 10))
+            (set log (+ log 1))
+        )
+
+        ; Printing integers
+        ; These need to be put into an array and printed in reverse
+        (set string (array 4))
+        (set i log)
+        (while (> n 0)
+            (array_set string i (+ 48 (% n 10)))
+            (set n (/ n 10))
+            (set i (- i 1))
+        )
+
+        (puts string)
     )
 "#;
 

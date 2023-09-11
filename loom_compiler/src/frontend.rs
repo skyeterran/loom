@@ -16,11 +16,15 @@ pub enum Expr {
     Sub(Box<Expr>, Box<Expr>),
     Mul(Box<Expr>, Box<Expr>),
     Div(Box<Expr>, Box<Expr>),
+    Modulo(Box<Expr>, Box<Expr>),
     IfElse(Box<Expr>, Vec<Expr>, Vec<Expr>),
     WhileLoop(Box<Expr>, Vec<Expr>),
     Call(String, Vec<Expr>),
     GlobalDataAddr(String),
     Sequence(Vec<Expr>),
+    MakeArray(u32),
+    GetArrayElem(Box<Expr>, Box<Expr>),
+    SetArrayElem(Box<Expr>, Box<Expr>, Box<Expr>),
 }
 
 impl Expr {
@@ -66,6 +70,7 @@ impl Expr {
                     "<=" => Expr::Le(args[0].clone(), args[1].clone()),
                     ">" => Expr::Gt(args[0].clone(), args[1].clone()),
                     ">=" => Expr::Ge(args[0].clone(), args[1].clone()),
+                    "%" => Expr::Modulo(args[0].clone(), args[1].clone()),
                     "if" => {
                         let truthy = *args[1].clone();
                         let truthy = match truthy {
@@ -115,6 +120,27 @@ impl Expr {
                             body.push(*a.clone());
                         }
                         Expr::Sequence(body)
+                    }
+                    "array" => {
+                        let Some(length) = args.get(0) else { todo!() };
+                        match *length.clone() {
+                            Expr::Literal(contents) => {
+                                let length: u32 = contents.parse().unwrap();
+                                Expr::MakeArray(length)
+                            }
+                            _ => todo!()
+                        }
+                    }
+                    "array_get" => {
+                        let Some(addr) = args.get(0) else { todo!() };
+                        let Some(index) = args.get(1) else { todo!() };
+                        Expr::GetArrayElem(addr.clone(), index.clone())
+                    }
+                    "array_set" => {
+                        let Some(addr) = args.get(0) else { todo!() };
+                        let Some(index) = args.get(1) else { todo!() };
+                        let Some(value) = args.get(2) else { todo!() };
+                        Expr::SetArrayElem(addr.clone(), index.clone(), value.clone())
                     }
                     _ => {
                         let mut body: Vec<Expr> = Vec::new();

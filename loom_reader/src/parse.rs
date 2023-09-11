@@ -1,6 +1,5 @@
 use std::error::Error;
 use std::fmt;
-use std::fs;
 
 /// The location of a token/expression in the source code
 #[derive(Debug, Clone, Copy)]
@@ -81,15 +80,8 @@ pub enum Exp {
         car: Box<Exp>,
         cdr: Vec<Exp>,
     },
-    List {
-        contents: Vec<Exp>,
-    },
-    Symbol {
-        contents: String,
-    },
-    Literal {
-        contents: String,
-    },
+    List(Vec<Exp>),
+    Atom(String),
 }
 
 impl Exp {
@@ -127,17 +119,14 @@ impl fmt::Display for Exp {
                 };
                 write!(f, "{content}")
             }
-            Exp::List { contents } => {
+            Exp::List(contents) => {
                 let inner = contents.iter()
                                     .map(|x| {format!("{x}")})
                                     .collect::<Vec<String>>()
                                     .join(" ");
                 write!(f, "[{inner}]")
             }
-            Exp::Symbol { contents } => {
-                write!(f, "{contents}")
-            }
-            Exp::Literal { contents } => {
+            Exp::Atom(contents) => {
                 write!(f, "{contents}")
             }
         }
@@ -371,11 +360,8 @@ pub fn process_atom(token: &Token) -> Exp {
             if content == "nil" {
                 Exp::Nil
             } else {
-                Exp::Symbol { contents: content.clone() }
+                Exp::Atom(content.clone())
             }
-        }
-        Token::StrLit { content, .. } => {
-            Exp::Literal { contents: content.clone() }
         }
         _ => todo!() // Shouldn't have been called
     }
@@ -474,7 +460,7 @@ pub fn parse_expression(
         ))
     } else {
         if in_list {
-            return Ok(Exp::List { contents });
+            return Ok(Exp::List(contents));
         } else {
             if contents.is_empty() {
                 return Ok(Exp::Nil);

@@ -1,0 +1,37 @@
+(def (pixel
+        [color (vec3 0 0 1)]
+        [emissive_strength 10]
+    )
+    (env
+        true
+        :base_color color
+        :emissive_color (* color emissive_strength)
+    )
+)
+
+...translates to:
+INPUT color (vec3 0 0 1)
+INPUT emissive_strength 10
+DEFINE v0 (MULTIPLY color emissive_strength)
+DEFINE v1 true
+OUTPUT . v1
+OUTPUT base_color color
+OUTPUT emissive_color v0
+
+(def (foo a b)
+    (if (> a 10)
+        a
+        b
+    )
+)
+
+...translates to:
+INPUT a
+INPUT b
+DEFINE v0 10
+DEFINE v1 (IFGREATER a v0)
+IF v1 {
+    OUTPUT . a
+} else {
+    OUTPUT . b
+}

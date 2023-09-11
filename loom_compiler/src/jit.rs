@@ -1,5 +1,7 @@
 use crate::frontend::*;
 use cranelift::prelude::*;
+use cranelift::codegen::ir::StackSlot;
+use cranelift::codegen::ir::immediates::Offset32;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Linkage, Module};
 use std::collections::HashMap;
@@ -270,6 +272,12 @@ impl<'a> FunctionTranslator<'a> {
                 self.builder.ins().udiv(lhs, rhs)
             }
 
+            Expr::Modulo(lhs, rhs) => {
+                let lhs = self.translate_expr(*lhs);
+                let rhs = self.translate_expr(*rhs);
+                self.builder.ins().urem(lhs, rhs)
+            }
+
             Expr::Eq(lhs, rhs) => self.translate_icmp(IntCC::Equal, *lhs, *rhs),
             Expr::Ne(lhs, rhs) => self.translate_icmp(IntCC::NotEqual, *lhs, *rhs),
             Expr::Lt(lhs, rhs) => self.translate_icmp(IntCC::SignedLessThan, *lhs, *rhs),
@@ -295,6 +303,47 @@ impl<'a> FunctionTranslator<'a> {
             }
             Expr::WhileLoop(condition, loop_body) => {
                 self.translate_while_loop(*condition, loop_body)
+            }
+            Expr::MakeArray(length) => {
+                // Length in bytes
+                let length = length * 64;
+                let stackslot = self.builder.create_sized_stack_slot(
+                    StackSlotData::new(StackSlotKind::ExplicitSlot, length)
+                );
+                let newval = self.builder.ins().iconst(self.int, 0);
+                self.builder.ins().stack_store(newval, stackslot, 0);
+                let stack_addr = self.builder.ins().stack_addr(self.int, stackslot, 0);
+
+                // Return the address of this stack slot
+                stack_addr
+            }
+            Expr::GetArrayElem(addr, index) => {
+                let addr = self.translate_expr(*addr);
+                let index = self.translate_expr(*index);
+                let elem_size = self.builder.ins().iconst(self.int, 64);
+                let elem_offset = self.builder.ins().imul(index, elem_size);
+                let elem_addr = self.builder.ins().iadd(addr, elem_offset);
+                self.builder.ins().load(
+                    self.int,
+                    MemFlags::new().with_aligned(),
+                    elem_addr,
+                    0
+                )
+            }
+            Expr::SetArrayElem(addr, index, value) => {
+                let addr = self.translate_expr(*addr);
+                let index = self.translate_expr(*index);
+                let value = self.translate_expr(*value);
+                let elem_size = self.builder.ins().iconst(self.int, 64);
+                let elem_offset = self.builder.ins().imul(index, elem_size);
+                let elem_addr = self.builder.ins().iadd(addr, elem_offset);
+                self.builder.ins().store(
+                    MemFlags::new().with_aligned(),
+                    value,
+                    elem_addr,
+                    0
+                );
+                self.builder.ins().iconst(self.int, 0)
             }
 
             _ => { todo!() }
