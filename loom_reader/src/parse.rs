@@ -99,6 +99,41 @@ impl Exp {
         }
         Self::SExp { car: Box::new(car), cdr }
     }
+    pub fn as_symbol(&self) -> Option<String> {
+        match self {
+            Exp::Atom(s) => Some(s.clone()),
+            _ => None
+        }
+    }
+    pub fn car_symbol(&self) -> Option<String> {
+        match self {
+            Exp::SExp { car, .. } => car.as_symbol(),
+            _ => None
+        }
+    }
+    pub fn args(&self) -> Option<Vec<Exp>> {
+        match self {
+            Exp::SExp { cdr, .. } => {
+                Some(cdr.clone())
+            }
+            _ => None
+        }
+    }
+    pub fn arg(&self, index: usize) -> Option<Exp> {
+        match self {
+            Exp::SExp { cdr, .. } => {
+                let Some(arg) = cdr.get(index) else { return None; };
+                Some(arg.clone())
+            }
+            _ => None
+        }
+    }
+    pub fn arg_symbol(&self, index: usize) -> Option<String> {
+        match self.arg(index) {
+            Some(v) => v.as_symbol(),
+            None => None
+        }
+    }
 }
 
 impl fmt::Display for Exp {
@@ -356,13 +391,14 @@ pub fn read_expressions(source: String) -> Result<Vec<Exp>, Box<dyn Error>> {
 
 pub fn process_atom(token: &Token) -> Exp {
     match token {
-        Token::Symbol { content, .. }=> {
+        Token::Symbol { content, .. } => {
             if content == "nil" {
                 Exp::Nil
             } else {
                 Exp::Atom(content.clone())
             }
         }
+        Token::StrLit { content, .. } => Exp::Atom(content.clone()),
         _ => todo!() // Shouldn't have been called
     }
 }
