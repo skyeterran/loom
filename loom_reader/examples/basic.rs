@@ -44,6 +44,10 @@ impl Compiler {
             ids: HashMap::new(),
         }
     }
+    pub fn add_nil(&mut self) -> ID {
+        self.variables.push(Prim::Nil);
+        ID::Index(self.variables.len() - 1)
+    }
     pub fn add_value(&mut self, x: String) -> ID {
         self.variables.push(Prim::Value(x));
         ID::Index(self.variables.len() - 1)
@@ -54,6 +58,9 @@ impl Compiler {
     }
     pub fn add_exp(&mut self, x: Exp) -> ID {
         match x {
+            Exp::Nil => {
+                self.add_nil()
+            }
             Exp::SExp { .. } => {
                 let Some(kind) = x.car_symbol() else { todo!() };
                 if kind == "def" {
