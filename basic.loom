@@ -1,6 +1,4 @@
 (def nice 69)
 (def dank 420)
-(def sum (+ 1 2 3))
-(def (hello)
-    (print "Hello, world!")
-)
+(def avg (/ (+ nice dank) 2))
+(print avg)
