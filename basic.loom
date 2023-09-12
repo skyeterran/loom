@@ -1,4 +1,6 @@
-(def nice 69)
-(def dank 420)
-(def avg (/ (+ nice dank) 2))
-(print avg)
+(def main (fn []
+    (def average (fn [x y z]
+        (/ (+ x y z) 3)
+    ))
+    (average 1 2 3)
+))
