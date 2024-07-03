@@ -1,0 +1,14 @@
+(sprite
+    :image (tex :path "Base.png")
+    :depth 0
+)
+
+(sprite
+    :image (tex-sequence
+        :paths ["MouthClosed.png" "MouthOpen.png"]
+        :time @talking
+    )
+    :depth 1
+    :visible (above @talking 0.5)
+)
+

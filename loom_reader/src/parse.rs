@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fmt;
+use std::collections::HashMap;
 
 /// The location of a token/expression in the source code
 #[derive(Debug, Clone, Copy)]
@@ -77,8 +78,9 @@ impl Token {
 pub enum Exp {
     Nil,
     SExp {
-        car: Box<Exp>,
-        cdr: Vec<Exp>,
+        kind: Box<Exp>,
+        args: Vec<Exp>,
+        kwargs: HashMap<String, Exp>,
     },
     List(Vec<Exp>),
     Atom(String),
@@ -86,18 +88,36 @@ pub enum Exp {
 
 impl Exp {
     fn new_sexp(contents: Vec<Exp>) -> Self {
-        let mut car = Exp::Nil;
-        let mut cdr: Vec<Exp> = Vec::new();
+        let mut kind = Exp::Nil;
+        let mut args: Vec<Exp> = Vec::new();
+        let mut kwargs: HashMap<String, Exp> = HashMap::new();
         let mut i: usize = 0;
+        let mut in_kwarg = false;
+        let mut this_kwarg = String::new();
         for c in contents {
             if i == 0 {
-                car = c;
+                kind = c;
             } else {
-                cdr.push(c);
+                if in_kwarg {
+                    // We're expecting a single value for the current kwarg
+                    kwargs.insert(this_kwarg.clone(), c);
+                    in_kwarg = false;
+                } else {
+                    if let Some(s) = c.as_symbol() {
+                        if let Some(kwarg_name) = s.strip_prefix(':') {
+                            in_kwarg = true;
+                            this_kwarg = kwarg_name.to_string();
+                        } else {
+                            args.push(c);
+                        };
+                    } else {
+                        args.push(c);
+                    };
+                }
             }
             i += 1;
         }
-        Self::SExp { car: Box::new(car), cdr }
+        Self::SExp { kind: Box::new(kind), args, kwargs }
     }
     pub fn as_symbol(&self) -> Option<String> {
         match self {
@@ -107,22 +127,22 @@ impl Exp {
     }
     pub fn car_symbol(&self) -> Option<String> {
         match self {
-            Exp::SExp { car, .. } => car.as_symbol(),
+            Exp::SExp { kind, .. } => kind.as_symbol(),
             _ => None
         }
     }
     pub fn args(&self) -> Option<Vec<Exp>> {
         match self {
-            Exp::SExp { cdr, .. } => {
-                Some(cdr.clone())
+            Exp::SExp { args, .. } => {
+                Some(args.clone())
             }
             _ => None
         }
     }
     pub fn arg(&self, index: usize) -> Option<Exp> {
         match self {
-            Exp::SExp { cdr, .. } => {
-                let Some(arg) = cdr.get(index) else { return None; };
+            Exp::SExp { args, .. } => {
+                let Some(arg) = args.get(index) else { return None; };
                 Some(arg.clone())
             }
             _ => None
@@ -142,15 +162,26 @@ impl fmt::Display for Exp {
             Exp::Nil => {
                 write!(f, "nil")
             }
-            Exp::SExp { car, cdr } => {
-                let content = if cdr.is_empty() {
-                    format!("({car})")
+            Exp::SExp { kind, args, kwargs } => {
+                let content = if args.is_empty() && kwargs.is_empty() {
+                    format!("({kind})")
                 } else {
-                    let cdr_list = cdr.iter()
-                                      .map(|x| {format!("{x}")})
-                                      .collect::<Vec<String>>()
-                                      .join(" ");
-                    format!("({car} {cdr_list})")
+                    let args_list = args.iter()
+                                        .map(|x| {format!("{x}")})
+                                        .collect::<Vec<String>>()
+                                        .join(" ");
+                    let kwargs_list = kwargs.iter()
+                                            .map(|(k, v)| {format!(":{k} {v}")})
+                                            .collect::<Vec::<String>>()
+                                            .join(" ");
+                    let mut result = format!("({kind}");
+                    if !args_list.is_empty() {
+                        result = format!("{result} {args_list}");
+                    }
+                    if !kwargs_list.is_empty() {
+                        result = format!("{result} {kwargs_list}");
+                    }
+                    format!("{result})")
                 };
                 write!(f, "{content}")
             }
@@ -374,12 +405,16 @@ pub fn read_expressions(source: String) -> Result<Vec<Exp>, Box<dyn Error>> {
                 }
                 
                 if nesting == 0 {
-                    expressions.push(parse_expression(&tokens, start, i)?);
+                    if let Some(x) = parse_expression(&tokens, start, i)? {
+                        expressions.push(x);
+                    };
                 }
             }
             _ => {
                 if nesting == 0 {
-                    expressions.push(process_atom(t));
+                    if let Some(atom) = process_atom(t) {
+                        expressions.push(atom);
+                    };
                 }
             }
         }
@@ -389,17 +424,17 @@ pub fn read_expressions(source: String) -> Result<Vec<Exp>, Box<dyn Error>> {
     Ok(expressions)
 }
 
-pub fn process_atom(token: &Token) -> Exp {
+pub fn process_atom(token: &Token) -> Option<Exp> {
     match token {
         Token::Symbol { content, .. } => {
             if content == "nil" {
-                Exp::Nil
+                Some(Exp::Nil)
             } else {
-                Exp::Atom(content.clone())
+                Some(Exp::Atom(content.clone()))
             }
         }
-        Token::StrLit { content, .. } => Exp::Atom(content.clone()),
-        _ => todo!() // Shouldn't have been called
+        Token::StrLit { content, .. } => Some(Exp::Atom(content.clone())),
+        _ => None
     }
 }
 
@@ -409,7 +444,7 @@ pub fn parse_expression(
     tokens: &Vec<Token>,
     start: usize,
     end: usize
-) -> Result<Exp, Box<dyn Error>> {
+) -> Result<Option<Exp>, Box<dyn Error>> {
     let mut contents: Vec<Exp> = Vec::new();
     let mut nested = false;
     let mut in_list = false;
@@ -424,7 +459,9 @@ pub fn parse_expression(
                 if nested {
                     // Find the matching RParen
                     let inner_end = find_exp_end(tokens, i, false)?;
-                    contents.push(parse_expression(tokens, i, inner_end)?);
+                    if let Some(x) = parse_expression(tokens, i, inner_end)? {
+                        contents.push(x);
+                    };
                     i = inner_end;
                 } else {
                     nested = true;
@@ -445,7 +482,9 @@ pub fn parse_expression(
                 if nested {
                     // Find the matching RParen
                     let inner_end = find_exp_end(tokens, i, true)?;
-                    contents.push(parse_expression(tokens, i, inner_end)?);
+                    if let Some(x) = parse_expression(tokens, i, inner_end)? {
+                        contents.push(x);
+                    };
                     i = inner_end;
                 } else {
                     nested = true;
@@ -470,7 +509,9 @@ pub fn parse_expression(
             }
             Token::Symbol {..} | Token::StrLit {..} => {
                 if nested {
-                    contents.push(process_atom(t));
+                    if let Some(atom) = process_atom(t) {
+                        contents.push(atom);
+                    };
                 } else {
                     if end - start > 1 {
                         // Multiple atoms outside of a list (syntax error)
@@ -496,12 +537,12 @@ pub fn parse_expression(
         ))
     } else {
         if in_list {
-            return Ok(Exp::List(contents));
+            return Ok(Some(Exp::List(contents)));
         } else {
             if contents.is_empty() {
-                return Ok(Exp::Nil);
+                return Ok(Some(Exp::Nil));
             } else {
-                return Ok(Exp::new_sexp(contents));
+                return Ok(Some(Exp::new_sexp(contents)));
             }
         }
     }

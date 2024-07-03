@@ -9,13 +9,13 @@ pub enum Form {
 impl Form {
     pub fn from_exp(x: Exp) -> Self {
         match x {
-            SExp { car, cdr } => {
-                match *car {
+            SExp { kind, args, kwargs } => {
+                match *kind {
                     Atom(atom) => {
                         match atom.as_str() {
                             "def" => {
-                                let Some(Atom(key)) = cdr.get(0) else { todo!() };
-                                let Some(value) = cdr.get(1) else { todo!() };
+                                let Some(Atom(key)) = args.get(0) else { todo!() };
+                                let Some(value) = args.get(1) else { todo!() };
                                 Self::Define(key.clone(), value.clone())
                             }
                             _ => Self::Unknown
