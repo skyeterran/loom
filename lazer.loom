@@ -1,3 +1,10 @@
+(signal talking
+    :type float
+    :default 0
+    :min 0
+    :max 1
+)
+
 (sprite
     :image (tex :path "Base.png")
     :depth 0
@@ -6,9 +13,8 @@
 (sprite
     :image (tex-sequence
         :paths ["MouthClosed.png" "MouthOpen.png"]
-        :time @talking
+        :time talking
     )
     :depth 1
-    :visible (above @talking 0.5)
+    :visible (above :signal talking :value 0.5)
 )
-
